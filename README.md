@@ -5,7 +5,6 @@
 We provide a TensorFlow implementation of [bi-LSTM TAG Supertagging](https://jungokasai.github.io/papers/EMNLP2017.pdf).
 The supertagger takes as input a file with the Conllu+Supertag format.
 
-<a name="requirements"/>
 ## Requirements
 
 TensorFlow needs to be installed before running the training script.
