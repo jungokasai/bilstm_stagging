@@ -37,7 +37,7 @@ After running this command, you should be getting the following files and direct
 
 | Directory/File | Description |
 |------|--------|
-|checkpoint.txt||
+|checkpoint.txt|Contains information about the best model.|
 |sents/|Contains the words in the one-sentence-per-line format|
 |gold_pos/|Contains the gold POS tags in the one-sentence-per-line format|
 |gold_stag/|Contains the gold supertags in the one-sentence-per-line format|
