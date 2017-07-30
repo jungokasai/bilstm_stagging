@@ -1,0 +1,16 @@
+{
+"data":
+    {"base_dir": "sample_data",
+     "train": "conllu/sample.conllustag", 
+     "dev": "conllu/sample.conllustag",
+     "test": "conllu/sample.conllustag"
+    },
+"stag_parameters":
+    {"num_layers": "2", 
+     "units": "2",
+     "dropout_p": "0.5",
+     "hidden_p": "0.5",
+     "input_p": "0.8",
+     "jk_dim": "0"
+    }
+}
