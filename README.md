@@ -6,8 +6,9 @@ We provide a TensorFlow implementation of the [bi-LSTM TAG Supertagging](https:/
 * [Requirements](#requirements)  
 * [GloVe](#glove)
 * [Train a Supertagger](#train)
+* [Jackknife POS Tagging](#jackknife)
 * [Run a pre-trained TAG Supertagger](#pretrained)
-* [Notes](#Notes)
+* [Notes](#notes)
 
 ## Requirements
 
@@ -42,10 +43,9 @@ After running this command, you should be getting the following files and direct
 |Super_models/|Stores the best model.|
 |conllu/sample.conllustag_stag|Contains the predicted supertags in the conllustag format|
 
-
-## Jackknife POS tagging
-
+## <a name="jackknife"></a>Jackknife POS tagging
 To Be Added.
+
 
 ## <a name="pretrained"></a>Run a pre-trained TAG Supertagger
 
