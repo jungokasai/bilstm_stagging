@@ -184,8 +184,7 @@ class Stagging_Model(object):
                 test_incomplete = next_test_batch(self.batch_size)
             predictions = np.hstack(predictions)
             if self.test_opts is not None:
-                if self.test_opts.save_tags:
-                    self.loader.output_stags(predictions, '1best_stags.txt')
+                self.loader.output_stags(predictions, self.test_opts.save_tags)
                         
             accuracy = np.mean(predictions == self.loader.test_gold)
             return accuracy

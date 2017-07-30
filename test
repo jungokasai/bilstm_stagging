@@ -1,3 +1,0 @@
-Convert conllu+stag file to sentences, gold pos, and gold stag
-Train pos tagger
-python bilstm_stagger_main.py train --task POS_models --text_train ../../ud/stag_extraction/new_data/WSJ/sents/train.txt --jk_train ../../ud/stag_extraction/new_data/WSJ/gold_pos/train.txt --tag_train ../../ud/stag_extraction/new_data/WSJ/gold_pos/train.txt --text_test ../../ud/stag_extraction/new_data/WSJ/sents/dev.txt --jk_test ../../ud/stag_extraction/new_data/WSJ/gold_pos/dev.txt --tag_test ../../ud/stag_extraction/new_data/WSJ/gold_pos/dev.txt --num_layers 2 --units 128 --dropout_p 0.5 --hidden_p 0.5 --input_dp 0.8

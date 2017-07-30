@@ -1,9 +1,9 @@
 {
 "data":
-    {"base_dir": "../../ud/stag_extraction/new_data/WSJ/",
-     "train": "wsj.train.conllu1", 
-     "dev": "wsj.dev.conllu1",
-     "test": "wsj.test.conllu1"
+    {"base_dir": "../../ud/stag_extraction/new_data/WSJ",
+     "train": "conllu/wsj.train.conllu1", 
+     "dev": "conllu/wsj.dev.conllu1",
+     "test": "conllu/wsj.test.conllu1"
     },
 "pos_parameters":
     {"num_layers": "2", 

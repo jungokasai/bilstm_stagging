@@ -39,12 +39,16 @@ train_parser.add_argument("--task", dest="task", help="supertagging or tagging",
 
 ## test options
 test_parser=subparsers.add_parser('test', help='test tagging')
+## data information
+test_parser.add_argument("--base_dir", dest="base_dir", help="base directory for data")
+test_parser.add_argument("--text_test", dest="text_test", help="text data for testing")
+test_parser.add_argument("--jk_test", dest="jk_test", help="jk data for testing")
+test_parser.add_argument("--tag_test", dest="tag_test", help="tag data for testing")
+## Model Information
 test_parser.add_argument("--model", dest="modelname", help="model name")
-test_parser.add_argument("--text", dest="path_to_text_test", help="test text file", default='data/sents/dev.txt')
-test_parser.add_argument("--pos", dest="path_to_jk_test", help="test pos (jackknife) file", default='data/predicted_pos/dev.txt')
-test_parser.add_argument("--tag", dest="path_to_tag_test", help="test tag file. If accuracy is off, no need to fill this in.", default='data/super_data/dev.txt')
+## Output Options
 test_parser.add_argument("--get_accuracy",  help="compute tag accuracy", action="store_true", default=False)
-test_parser.add_argument("--save_tags",  help="save 1-best tags", action="store_true", default=False)
+test_parser.add_argument("--save_tags", dest="save_tags", help="save 1-best tags")
 
 opts = parser.parse_args()
 

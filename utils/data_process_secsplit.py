@@ -15,9 +15,14 @@ class Dataset(object):
         path_to_text = opts.text_train
         path_to_tag = opts.tag_train
         path_to_jk = opts.jk_train
-        path_to_text_test = opts.text_test
-        path_to_tag_test = opts.tag_test
-        path_to_jk_test = opts.jk_test
+        if test_opts is None:
+            path_to_text_test = opts.text_test
+            path_to_tag_test = opts.tag_test
+            path_to_jk_test = opts.jk_test
+        else:
+            path_to_text_test = test_opts.text_test
+            path_to_tag_test = test_opts.tag_test
+            path_to_jk_test = test_opts.jk_test
 
         self.inputs_train = []
         self.inputs_test = []
