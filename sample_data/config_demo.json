@@ -1,9 +1,10 @@
 {
 "data":
     {"base_dir": "sample_data",
-     "train": "conllu/sample.conllustag", 
-     "dev": "conllu/sample.conllustag",
-     "test": "conllu/sample.conllustag"
+     "split": {"train": "conllu/sample.conllustag", 
+               "dev": "conllu/sample.conllustag",
+                "test": "conllu/sample.conllustag"
+              }
     },
 "stag_parameters":
     {"num_layers": "2", 

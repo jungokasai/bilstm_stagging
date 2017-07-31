@@ -7,11 +7,11 @@ from tools.converters.conllu2sents import conllu2sents
 from tools.converters.sents2conllustag import output_conllu
 
 def converter(config):
-    data_types = ['train', 'dev', 'test']
+    data_types = config['data']['split'].keys()
     features = ['sents', 'gold_pos', 'gold_stag']
     for feature in features:
         for data_type in data_types:
-            input_file = os.path.join(config['data']['base_dir'], config['data'][data_type])
+            input_file = os.path.join(config['data']['base_dir'], config['data']['split'][data_type])
             output_file = os.path.join(config['data']['base_dir'], feature, data_type+'.txt')
             if not os.path.isdir(os.path.dirname(output_file)):
                 os.makedirs(os.path.dirname(output_file))
@@ -73,7 +73,7 @@ def test_stagger(config, best_model, data_types):
         test_data_info = ' --text_test {} --jk_test {} --tag_test {}'.format(os.path.join(base_dir, 'sents', '{}.txt'.format(data_type)), os.path.join(base_dir, 'gold_stag', '{}.txt'.format(data_type)), os.path.join(base_dir, 'gold_stag', '{}.txt'.format(data_type)))
         complete_command = base_command + model_info + output_info + test_data_info
         subprocess.check_call(complete_command, shell=True)
-        output_conllu(output_file, os.path.join(base_dir, config['data'][data_type]), os.path.join(base_dir, config['data'][data_type]+'_stag'))
+        output_conllu(output_file, os.path.join(base_dir, config['data']['split'][data_type]), os.path.join(base_dir, config['data']['split'][data_type]+'_stag'))
 ######### main ##########
 
 if __name__ == '__main__':
@@ -88,4 +88,6 @@ if __name__ == '__main__':
     train_stagger(config_file)
     print('Training is done. Run the supertagger.')
     best_model = get_best_model(config_file)
-    test_stagger(config_file, best_model, ['dev', 'test'])
+    data_types = config_file['data']['split'].keys()
+    test_stagger(config_file, best_model, data_types)
+#    test_stagger(config_file, best_model, ['train'])
