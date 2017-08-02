@@ -1,9 +1,9 @@
 from __future__ import print_function
-import matplotlib
+#import matplotlib
 from data_process_secsplit import Dataset
 from lstm import get_lstm_weights, lstm
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+#matplotlib.use('Agg')
+#import matplotlib.pyplot as plt
 import numpy as np
 import time
 import pickle
