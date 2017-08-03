@@ -9,9 +9,9 @@ We provide a TensorFlow implementation of the [bi-LSTM TAG Supertagging](https:/
 * [GloVe](#glove)
 * [Data Format](#data)
 * [Train a Supertagger](#train)
+* [Structure of the Code](#structure)
 * [Jackknife POS Tagging](#jackknife)
 * [Run a pre-trained TAG Supertagger](#pretrained)
-* [Structure of the Code](#structure)
 * [Notes](#notes)
 
 ## Requirements
@@ -47,14 +47,6 @@ After running this command, you should be getting the following files and direct
 |Super_models/|Stores the best model.|
 |conllu/sample.conllustag_stag|Contains the predicted supertags in the conllustag format|
 
-## <a name="jackknife"></a>Jackknife POS tagging
-To Be Added.
-
-
-## <a name="pretrained"></a>Run a pre-trained TAG Supertagger
-
-To Be Added.
-
 ## <a name="structure"></a>Structure of the Code
 | File | Description |
 |------|--------|
@@ -65,6 +57,14 @@ To Be Added.
 |``bilstm_stagger_model.py``|Contains functions that instantiate the ``Stagging_Model`` class and train/test a model. Gets imported to ``bilstm_stagger_main.py``|
 |``bilstm_stagger_main.py``|Main file to run experiments. Reads model and data options.|
 |``train_bilstm_stagger.py``|Runs ``bilstm_stagger_main.py`` in bash according to the json file that gets passed.|
+## <a name="jackknife"></a>Jackknife POS tagging
+To Be Added.
+
+
+## <a name="pretrained"></a>Run a pre-trained TAG Supertagger
+
+To Be Added.
+
 
 ## Notes
 
