@@ -60,7 +60,7 @@ To Be Added.
 |------|--------|
 |``utils/preprocessing.py``|Contains tools for preprocessing. Mainly for tokenizing and indexing words/tags. Gets imported to ``utils/data_process_secsplit.py``|
 |``utils/data_process_secsplit.py``|Reads training and test data and tokenize/index words, POS tags and stags. Extracts suffixes and number/capitalization features.|
-|``utils/stagging_model.py``|Contains the ``Stagging_Model`` class that constructs our LSTM computation graph. The class has the necessary methods for training and testing. Gets imported to ``bilstm_stagger_model.py``|
+|``utils/stagging_model.py``|Contains the ``Stagging_Model`` class that constructs our LSTM computation graph. The class has the necessary methods for training and testing. Gets imported to ``bilstm_stagger_model.py``. For more details, read [README for utils](utils/README.md).|
 |``utils/lstm.py``|Contains tensorflow LSTM equations. Gets imported to ``utils/stagging_model.py``.|
 |``bilstm_stagger_model.py``|Contains functions that instantiate the ``Stagging_Model`` class and train/test a model. Gets imported to ``bilstm_stagger_main.py``|
 |``bilstm_stagger_main.py``|Main file to run experiments. Reads model and data options.|
