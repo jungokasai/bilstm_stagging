@@ -6,6 +6,8 @@ The inputs to the supertagger (stagger) are:
 
 * Word Identities
 * 2 character suffixes 
+* Number Indicators
+* Capitalization Indicators
 * Predicted POS tags from the jackknife training
 
 All the inputs listed above are sequences of length equal to the sentence length; our placeholders in the TensorFlow implementation are just those lists! Simple.
