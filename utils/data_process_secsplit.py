@@ -44,7 +44,8 @@ class Dataset(object):
         glove_size = opts.embedding_dim
         self.embeddings_index = {}
         print('Indexing word vectors.')
-        f = open('glovevector/glove.6B.{}d.txt'.format(glove_size))
+        #f = open('glovevector/glove.6B.{}d.txt'.format(glove_size))
+        f = open(opts.word_embeddings_file)
         for line in f:
             values = line.split()
             word = values[0]

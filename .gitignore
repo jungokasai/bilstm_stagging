@@ -4,3 +4,8 @@ glovevector/*
 *.sh
 1best_stags.txt
 data/*
+sample_data/Super_models/*
+sample_data/gold_stag/*
+sample_data/gold_pos/*
+sample_data/sents/*
+sample_data/checkpoint.txt
