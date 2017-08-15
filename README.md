@@ -60,9 +60,9 @@ After running this command, you should be getting the following files and direct
 |``jackknife_train_stagger.py``|Runs ``bilstm_stagger_main.py`` in a jackknife fashion. Uses ``train_bilstm_stagger.py``.|
 ## <a name="jackknife"></a>Jackknife Training
 
-Run:
+Run, for example 3-fold jackknife training by:
 ```bash
-python train_bilstm_stagger.py sample_data/config_demo.json
+python jackknife_training.py sample_data/config_demo.json 3
 ```
 
 ## <a name="pretrained"></a>Run a pre-trained TAG Supertagger
