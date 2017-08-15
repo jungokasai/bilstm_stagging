@@ -80,18 +80,15 @@ def test_stagger(config, best_model, data_types):
         output_conllu(os.path.join(base_dir, config['data']['split'][data_type]), os.path.join(base_dir, config['data']['split'][data_type]+'_stag'), inputs)
 ######### main ##########
 
+
 if __name__ == '__main__':
     config_file = sys.argv[1]
     config_file = read_config(config_file)
-    print('Convert conllu+stag file to sentences, gold pos, and gold stag')
-    converter(config_file)
+    print('Training is done. Run the supertagger.')
+    best_model = '/home/lily/jk964/active_projects/ud/ud_data/CoNLL17/ud-treebanks-conll2017/UD_Italian/new_data/Super_models/cap1_num1_bi1_numlayers2_embeddim300_seed0_units512_dropout0.5_inputdp0.8_hp0.5_suffix10_jkdim0/best_model'
+    data_types = config_file['data']['split'].keys()
 #    print('Train POS-tagger')
 #    train_pos_tagger(config_file)
 #    print('Run Jackknife Training of POS tagging for Supertagging')
-    print('Train Supertagger')
-    train_stagger(config_file)
-    print('Training is done. Run the supertagger.')
-    best_model = get_best_model(config_file)
-    data_types = config_file['data']['split'].keys()
     test_stagger(config_file, best_model, data_types)
 #    test_stagger(config_file, best_model, ['train'])

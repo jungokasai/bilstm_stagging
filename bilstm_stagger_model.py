@@ -15,7 +15,7 @@ def run_model(opts, loader = None, epoch=0):
         saver = tf.train.Saver(max_to_keep=1)
         with tf.Session() as session: 
             session.run(tf.global_variables_initializer())
-            best_accuracy = 0.0
+            best_accuracy = -1.0
             bad_times = 0
             for i in xrange(opts.max_epochs):
                 print('Epoch {}'.format(i+1))

@@ -57,9 +57,13 @@ After running this command, you should be getting the following files and direct
 |``bilstm_stagger_model.py``|Contains functions that instantiate the ``Stagging_Model`` class and train/test a model. Gets imported to ``bilstm_stagger_main.py``|
 |``bilstm_stagger_main.py``|Main file to run experiments. Reads model and data options.|
 |``train_bilstm_stagger.py``|Runs ``bilstm_stagger_main.py`` in bash according to the json file that gets passed.|
-## <a name="jackknife"></a>Jackknife POS tagging
-To Be Added.
+|``jackknife_train_stagger.py``|Runs ``bilstm_stagger_main.py`` in a jackknife fashion. Uses ``train_bilstm_stagger.py``.|
+## <a name="jackknife"></a>Jackknife Training
 
+Run:
+```bash
+python train_bilstm_stagger.py sample_data/config_demo.json
+```
 
 ## <a name="pretrained"></a>Run a pre-trained TAG Supertagger
 

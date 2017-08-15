@@ -13,6 +13,7 @@
      "hidden_p": "0.5",
      "input_p": "0.8",
      "jk_dim": "0",
+     "max_epochs": "1",
      "word_embeddings_file": "glovevector/glove.6B.300d.txt",
      "embedding_dim": "300"
     }
