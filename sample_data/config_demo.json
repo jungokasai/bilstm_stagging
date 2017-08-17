@@ -7,7 +7,8 @@
               }
     },
 "stag_parameters":
-    {"num_layers": "2", 
+    {"model": "Stagging_Model_Attention",
+     "num_layers": "2", 
      "units": "2",
      "dropout_p": "0.5",
      "hidden_p": "0.5",

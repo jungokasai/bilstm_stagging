@@ -9,6 +9,7 @@ subparsers = parser.add_subparsers(title='different modes', dest = 'mode', descr
 train_parser=subparsers.add_parser('train', help='train parsing')
 
 ## train options
+train_parser.add_argument("--model", dest="model", help="model", default='Stagging_Model')
 ## data information
 train_parser.add_argument("--base_dir", dest="base_dir", help="base directory for data")
 train_parser.add_argument("--text_train", dest="text_train", help="text data for training")

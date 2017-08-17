@@ -71,11 +71,10 @@ class Stagging_Model(object):
         h = tf.unstack(cell_hidden, 2, axis=1)[1] #[seq_len, batch_size, units]
         return h
 
-    def add_dropout(self, inputs, keep_prob, name):
+    def add_dropout(self, inputs, keep_prob):
         ## inputs [seq_len, batch_size, inputs_dims/units]
-        with tf.variable_scope(name) as scope:
-            dummy_dp = tf.ones(tf.shape(inputs)[1:])
-            dummy_dp = tf.nn.dropout(dummy_dp, keep_prob)
+        dummy_dp = tf.ones(tf.shape(inputs)[1:])
+        dummy_dp = tf.nn.dropout(dummy_dp, keep_prob)
         return tf.map_fn(lambda x: dummy_dp*x, inputs)
 
     def add_projection(self, inputs): 
@@ -120,14 +119,14 @@ class Stagging_Model(object):
         if self.opts.jk_dim > 0:
             inputs_list.append(self.add_jackknife_embedding())
         inputs_tensor = tf.concat(inputs_list, 2) ## [seq_len, batch_size, inputs_dim]
-        forward_inputs_tensor = self.add_dropout(inputs_tensor, self.input_keep_prob, 'ForwardInputs')
+        forward_inputs_tensor = self.add_dropout(inputs_tensor, self.input_keep_prob)
         for i in xrange(self.opts.num_layers):
-            forward_inputs_tensor = self.add_dropout(self.add_lstm(forward_inputs_tensor, i, 'Forward'), self.keep_prob, 'ForwardLayer{}'.format(i)) ## [seq_len, batch_size, units]
+            forward_inputs_tensor = self.add_dropout(self.add_lstm(forward_inputs_tensor, i, 'Forward'), self.keep_prob) ## [seq_len, batch_size, units]
         lstm_outputs = forward_inputs_tensor
         if self.opts.bi:
-            backward_inputs_tensor = self.add_dropout(tf.reverse(inputs_tensor, [0]), self.input_keep_prob, 'BackwardInputs')
+            backward_inputs_tensor = self.add_dropout(tf.reverse(inputs_tensor, [0]), self.input_keep_prob)
             for i in xrange(self.opts.num_layers):
-                backward_inputs_tensor = self.add_dropout(self.add_lstm(backward_inputs_tensor, i, 'Backward'), self.keep_prob, 'BackwardLayer{}'.format(i)) ## [seq_len, batch_size, units]
+                backward_inputs_tensor = self.add_dropout(self.add_lstm(backward_inputs_tensor, i, 'Backward'), self.keep_prob) ## [seq_len, batch_size, units]
             backward_inputs_tensor = tf.reverse(backward_inputs_tensor, [0])
             lstm_outputs = tf.concat([lstm_outputs, backward_inputs_tensor], 2) ## [seq_len, batch_size, outputs_dim]
         projected_outputs = tf.map_fn(lambda x: self.add_projection(x), lstm_outputs) #[seq_len, batch_size, nb_tags]
