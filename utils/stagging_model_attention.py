@@ -73,6 +73,7 @@ class Stagging_Model_Attention(Stagging_Model):
             lstm_outputs = tf.concat([lstm_outputs, backward_inputs_tensor], 2) ## [seq_len, batch_size, outputs_dim]
             cells = tf.concat([cells, cells_backward], 2) ## [seq_len, batch_size, outputs_dim]
         lstm_outputs = self.add_attention(lstm_outputs, cells)
+        #lstm_outputs = self.add_dropout(lstm_outputs, self.keep_prob)
         projected_outputs = tf.map_fn(lambda x: self.add_projection(x), lstm_outputs) #[seq_len, batch_size, nb_tags]
         projected_outputs = tf.transpose(projected_outputs, perm=[1, 0, 2]) # [batch_size, seq_len, nb_tags]
         self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_list[0], tf.zeros(tf.shape(self.inputs_placeholder_list[0]), tf.int32)), tf.float32) ## [batch_size, seq_len]

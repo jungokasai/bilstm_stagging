@@ -4,7 +4,7 @@ def get_attention_weights(name, units): # no dropout
     weights = {}
     with tf.variable_scope(name) as scope:
         weights['W-attention'] = tf.get_variable('W-attention', [units, units])
-        #weights['b-attention'] = tf.get_variable('b-attention', [units])
+        weights['b-attention'] = tf.get_variable('b-attention', [units])
     return weights
 
 #def attention_equation(lstm_outputs, cells, weights): 
@@ -29,13 +29,15 @@ def attention_equation(lstm_outputs, cells, weights):
     ## [b, n, d]
     cells = tf.transpose(cells, [1, 0, 2]) 
     ## [b, n, d]
-    output = cells + tf.map_fn(lambda x: get_context(x, weights), lstm_outputs)
+    #output = cells + tf.map_fn(lambda x: get_context(x, weights), lstm_outputs)
+    output = tf.map_fn(lambda x: get_context(x, weights), lstm_outputs)
     output = tf.transpose(output, [1, 0, 2]) ## [n, b, d]
     return output
 
 def get_context(lstm_outputs_sent, weights):
     ## lstm_outputs_sent [n, d]
     coefs = tf.matmul(tf.matmul(lstm_outputs_sent, weights['W-attention']), tf.transpose(lstm_outputs_sent, [1, 0])) # [n, n]
+    coefs += tf.matmul(lstm_outputs_sent, tf.expand_dims(weights['b-attention'], 1))
     coefs = tf.nn.softmax(coefs) ## [n, n]
     #output_sent = tf.reduce_sum(coefs*tf.expand_dims(lstm_outputs_sent, 0), 1) # [n, d]
     output_sent = tf.matmul(coefs, lstm_outputs_sent)
