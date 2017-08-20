@@ -29,6 +29,7 @@ train_parser.add_argument("--num_layers",  dest="num_layers", help="number of la
 train_parser.add_argument("--units", dest="units", help="hidden units size", type=int, default = 64)
 train_parser.add_argument("--seed", dest="seed", help="set seed", type= int, default = 0)
 train_parser.add_argument("--jk_dim", dest="jk_dim", help="jakcknife dimension", type=int, default = 5)
+train_parser.add_argument("--lm", dest="lm", help="Stag Language Model Size", type=int, default = 0)
 train_parser.add_argument("--embedding_dim", dest="embedding_dim", help="embedding dim", type=int, default = 100)
 train_parser.add_argument("--word_embeddings_file", dest="word_embeddings_file", help="embeddings file", default = 'glovevector/glove.6B.100d.txt')
 train_parser.add_argument("--early_stopping", dest="early_stopping", help="early stopping", type=int, default = 2)
@@ -48,6 +49,7 @@ test_parser.add_argument("--jk_test", dest="jk_test", help="jk data for testing"
 test_parser.add_argument("--tag_test", dest="tag_test", help="tag data for testing")
 ## Model Information
 test_parser.add_argument("--model", dest="modelname", help="model name")
+test_parser.add_argument("--beam_size", dest="beam_size", help="beam size", default=16)
 ## Output Options
 test_parser.add_argument("--get_accuracy",  help="compute tag accuracy", action="store_true", default=False)
 test_parser.add_argument("--save_tags", dest="save_tags", help="save 1-best tags")

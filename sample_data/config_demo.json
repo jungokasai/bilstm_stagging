@@ -7,14 +7,15 @@
               }
     },
 "stag_parameters":
-    {"model": "Stagging_Model_Attention",
+    {"model": "Stagging_Model_LM",
      "num_layers": "2", 
      "units": "2",
      "dropout_p": "0.5",
      "hidden_p": "0.5",
      "input_p": "0.8",
-     "jk_dim": "0",
+     "jk_dim": "5",
      "max_epochs": "1",
+     "lm": "5",
      "word_embeddings_file": "glovevector/glove.6B.300d.txt",
      "embedding_dim": "300"
     }

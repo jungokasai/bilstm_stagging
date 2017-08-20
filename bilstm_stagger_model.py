@@ -53,7 +53,7 @@ def run_model_test(opts, test_opts):
     g = tf.Graph()
     with g.as_default():
         Model = getattr(utils, opts.model)
-        model = Model(opts, test_opts)
+        model = Model(opts, test_opts, test_opts.beam_size)
         saver = tf.train.Saver(max_to_keep=1)
         with tf.Session() as session: 
             session.run(tf.global_variables_initializer())

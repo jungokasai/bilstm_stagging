@@ -77,12 +77,14 @@ class Stagging_Model(object):
         dummy_dp = tf.nn.dropout(dummy_dp, keep_prob)
         return tf.map_fn(lambda x: dummy_dp*x, inputs)
 
-    def add_projection(self, inputs): 
+    def add_projection(self, inputs, reuse=False): 
         with tf.variable_scope('Projection') as scope:
+            if reuse:
+                scope.reuse_variables()
             proj_U = tf.get_variable('weight', [self.outputs_dim, self.loader.nb_tags]) 
             proj_b = tf.get_variable('bias', [self.loader.nb_tags])
             outputs = tf.matmul(inputs, proj_U)+proj_b 
-            return outputs
+        return outputs
 
     def add_loss_op(self, output):
         cross_entropy = sequence_loss(output, self.inputs_placeholder_list[5], self.weight)

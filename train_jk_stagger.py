@@ -64,7 +64,7 @@ def test_stagger(config, best_model, data_types):
         test_data_info = ' --text_test {} --jk_test {} --tag_test {}'.format(os.path.join(base_dir, 'sents', '{}.txt'.format(data_type)), os.path.join(base_dir, 'predicted_pos', '{}.txt'.format(data_type)), os.path.join(base_dir, 'gold_stag', '{}.txt'.format(data_type)))
         complete_command = base_command + model_info + output_info + test_data_info
         subprocess.check_call(complete_command, shell=True)
-        output_conllu(os.path.join(base_dir, config['data']['split'][data_type]), os.path.join(base_dir, config['data']['split'][data_type]+'_stag'), inputs)
+        #output_conllu(os.path.join(base_dir, config['data']['split'][data_type]), os.path.join(base_dir, config['data']['split'][data_type]+'_stag'), inputs)
 ######### main ##########
 
 if __name__ == '__main__':
