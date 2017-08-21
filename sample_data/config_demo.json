@@ -7,7 +7,7 @@
               }
     },
 "stag_parameters":
-    {"model": "Stagging_Model_LM",
+    {"model": "Stagging_Model_Global_LM",
      "num_layers": "2", 
      "units": "2",
      "dropout_p": "0.5",
