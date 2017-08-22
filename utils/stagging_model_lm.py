@@ -226,6 +226,7 @@ class Stagging_Model_LM(Stagging_Model):
             epoch_start_time = time.time()
             next_batch = self.loader.next_batch
             epoch_incomplete = next_batch(self.batch_size)
+            ## debug
             while epoch_incomplete:
                 loss, accuracy = self.run_batch(session)
                 print('{}/{}, loss {:.4f}, accuracy {:.4f}'.format(self.loader._index_in_epoch, self.loader.nb_train_samples, loss, accuracy), end = '\r')

@@ -74,7 +74,7 @@ if __name__ == '__main__':
 #    converter(config_file)
 #    print('Train POS-tagger')
 #    train_pos_tagger(config_file)
-#    print('Run Jackknife Training of POS tagging for Supertagging')
+    print('Run Jackknife Training of POS tagging for Supertagging')
     print('Train Supertagger')
     train_stagger(config_file)
     print('Training is done. Run the supertagger.')

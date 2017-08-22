@@ -18,6 +18,8 @@ def run_model(opts, loader = None, epoch=0):
         saver = tf.train.Saver(max_to_keep=1)
         with tf.Session() as session: 
             session.run(tf.global_variables_initializer())
+            if opts.modelname is not None:
+                saver.restore(session, opts.modelname)
             best_accuracy = -1.0
             bad_times = 0
             for i in xrange(opts.max_epochs):
@@ -52,6 +54,7 @@ def run_model(opts, loader = None, epoch=0):
 def run_model_test(opts, test_opts):
     g = tf.Graph()
     with g.as_default():
+        #opts.model = 'Stagging_Model_Global_LM'
         Model = getattr(utils, opts.model)
         model = Model(opts, test_opts, test_opts.beam_size)
         saver = tf.train.Saver(max_to_keep=1)

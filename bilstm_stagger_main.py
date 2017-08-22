@@ -32,13 +32,14 @@ train_parser.add_argument("--jk_dim", dest="jk_dim", help="jakcknife dimension",
 train_parser.add_argument("--lm", dest="lm", help="Stag Language Model Size", type=int, default = 0)
 train_parser.add_argument("--embedding_dim", dest="embedding_dim", help="embedding dim", type=int, default = 100)
 train_parser.add_argument("--word_embeddings_file", dest="word_embeddings_file", help="embeddings file", default = 'glovevector/glove.6B.100d.txt')
-train_parser.add_argument("--early_stopping", dest="early_stopping", help="early stopping", type=int, default = 2)
+train_parser.add_argument("--early_stopping", dest="early_stopping", help="early stopping", type=int, default = 200)
 train_parser.add_argument("--suffix_dim", dest="suffix_dim", help="suffix_dim", type=int, default = 10)
 train_parser.add_argument("--lrate", dest="lrate", help="lrate", type=float, default = 0.01)
 train_parser.add_argument("--dropout_p", dest="dropout_p", help="keep fraction", type=float, default = 1.0)
 train_parser.add_argument("--hidden_p", dest="hidden_p", help="keep fraction of hidden units", type=float, default = 1.0)
 train_parser.add_argument("--input_p", dest="input_dp", help="keep fraction for input", type=float, default = 1.0)
 train_parser.add_argument("--task", dest="task", help="supertagging or tagging", default='Super_models', choices=['POS_models', 'Super_models'])
+train_parser.add_argument("--trained_model", dest="modelname", help="model name")
 
 ## test options
 test_parser=subparsers.add_parser('test', help='test tagging')
@@ -57,7 +58,8 @@ test_parser.add_argument("--save_tags", dest="save_tags", help="save 1-best tags
 opts = parser.parse_args()
 
 if opts.mode == "train":
-    model_dir = '{}/cap{}_num{}_bi{}_numlayers{}_embeddim{}_seed{}_units{}_dropout{}_inputdp{}_hp{}_suffix{}_jkdim{}'.format(opts.task, opts.cap, opts.num, opts.bi, opts.num_layers, opts.embedding_dim, opts.seed, opts.units, opts.dropout_p, opts.input_dp, opts.hidden_p, opts.suffix_dim, opts.jk_dim)
+    params = ['bi', 'num_layers', 'units', 'seed', 'jk_dim', 'lm', 'embedding_dim', 'suffix_dim', 'lrate', 'dropout_p', 'hidden_p', 'input_dp', 'task']
+    model_dir = '{}/'.format(opts.model) + '-'.join(map(lambda x: str(getattr(opts, x)), params))
     opts.model_dir = os.path.join(opts.base_dir, model_dir)
     print('Model Dirctory: {}'.format(opts.model_dir))
     if not os.path.isdir(opts.model_dir):

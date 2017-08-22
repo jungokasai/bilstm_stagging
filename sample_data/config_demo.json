@@ -8,15 +8,16 @@
     },
 "stag_parameters":
     {"model": "Stagging_Model_Global_LM",
+    "trained_model": "sample_data/best_model", 
      "num_layers": "2", 
-     "units": "2",
+     "units": "50",
      "dropout_p": "0.5",
      "hidden_p": "0.5",
      "input_p": "0.8",
      "jk_dim": "5",
-     "max_epochs": "1",
+     "max_epochs": "50",
      "lm": "5",
-     "word_embeddings_file": "glovevector/glove.6B.300d.txt",
-     "embedding_dim": "300"
+     "word_embeddings_file": "glovevector/glove.6B.100d.txt",
+     "embedding_dim": "100"
     }
 }
