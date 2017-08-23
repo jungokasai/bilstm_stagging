@@ -77,8 +77,10 @@ class Stagging_Model(object):
         dummy_dp = tf.nn.dropout(dummy_dp, keep_prob)
         return tf.map_fn(lambda x: dummy_dp*x, inputs)
 
-    def add_projection(self, inputs, reuse=False): 
-        with tf.variable_scope('Projection') as scope:
+    def add_projection(self, inputs, reuse=False, name=None): 
+        if name is None:
+            name = 'Projection'
+        with tf.variable_scope(name) as scope:
             if reuse:
                 scope.reuse_variables()
             proj_U = tf.get_variable('weight', [self.outputs_dim, self.loader.nb_tags]) 

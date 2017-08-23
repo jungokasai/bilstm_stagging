@@ -15,7 +15,8 @@
      "hidden_p": "0.5",
      "input_p": "0.8",
      "jk_dim": "5",
-     "max_epochs": "50",
+     "max_epochs": "1000",
+     "early_stopping": "1000",
      "lm": "5",
      "word_embeddings_file": "glovevector/glove.6B.100d.txt",
      "embedding_dim": "100"

@@ -27,7 +27,7 @@ class Stagging_Model_LM(Stagging_Model):
         return inputs 
 
 ## Greedy Supertagging
-    def add_forward_path(self, forward_inputs_tensor, backward_embeddings):
+    def add_forward_path(self, forward_inputs_tensor, backward_embeddings, reuse=False):
         batch_size = tf.shape(forward_inputs_tensor)[1]
         prev_init = [tf.zeros([2*self.opts.num_layers, batch_size, self.opts.units]), tf.zeros([batch_size], tf.int32), 0, tf.zeros([batch_size, self.loader.nb_tags])]
         ## We need the following memory states (list of four elements): 
@@ -43,7 +43,7 @@ class Stagging_Model_LM(Stagging_Model):
                 inputs_dim = self.inputs_dim + self.opts.lm
             else:
                 inputs_dim = self.opts.units
-            lstm_weights_list.append(get_lstm_weights('{}_LSTM_layer{}'.format(name, i), inputs_dim, self.opts.units, batch_size, self.hidden_prob))
+            lstm_weights_list.append(get_lstm_weights('{}_LSTM_layer{}'.format(name, i), inputs_dim, self.opts.units, batch_size, self.hidden_prob, 0, reuse))
         self.add_stag_embedding_mat()
         self.add_stag_dropout_mat(batch_size)
         ##

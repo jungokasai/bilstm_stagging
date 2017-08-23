@@ -1,8 +1,10 @@
 import tensorflow as tf 
 
-def get_lstm_weights(name, inputs_dim, units, batch_size, hidden_prob, beam_size=1):
+def get_lstm_weights(name, inputs_dim, units, batch_size, hidden_prob, beam_size=0, reuse=False):
     weights = {}
     with tf.variable_scope(name) as scope:
+        if reuse:
+            scope.reuse_variables()
 	weights['theta_x_i'] = tf.get_variable('theta_x_i', [inputs_dim, units])
 	weights['theta_x_f'] = tf.get_variable('theta_x_f', [inputs_dim, units])
 	weights['theta_x_o'] = tf.get_variable('theta_x_o', [inputs_dim, units] )
