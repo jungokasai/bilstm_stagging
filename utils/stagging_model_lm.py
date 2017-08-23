@@ -233,7 +233,7 @@ class Stagging_Model_LM(Stagging_Model):
                 loss, accuracy = self.run_batch(session)
                 print('{}/{}, loss {:.4f}, accuracy {:.4f}'.format(self.loader._index_in_epoch, self.loader.nb_train_samples, loss, accuracy), end = '\r')
                 epoch_incomplete = next_batch(self.batch_size)
-                if count == 100 and self.opts.model == 'Stagging_Model_Global_LM':
+                if count == 100 and self.opts.model in ['Stagging_Model_Global_LM']:
                     break
                     
             print('\nEpoch Training Time {}'.format(time.time() - epoch_start_time))
@@ -287,6 +287,7 @@ class Stagging_Model_LM(Stagging_Model):
         self.test_opts = test_opts
         self.loader = Dataset(opts, test_opts)
         self.batch_size = 100
+        #self.batch_size = 32
         self.beam_size = beam_size
         self.add_placeholders()
         self.inputs_dim = self.opts.embedding_dim + self.opts.suffix_dim + self.opts.cap + self.opts.num + self.opts.jk_dim
