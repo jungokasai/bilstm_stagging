@@ -32,7 +32,7 @@ train_parser.add_argument("--jk_dim", dest="jk_dim", help="jakcknife dimension",
 train_parser.add_argument("--lm", dest="lm", help="Stag Language Model Size", type=int, default = 0)
 train_parser.add_argument("--embedding_dim", dest="embedding_dim", help="embedding dim", type=int, default = 100)
 train_parser.add_argument("--word_embeddings_file", dest="word_embeddings_file", help="embeddings file", default = 'glovevector/glove.6B.100d.txt')
-train_parser.add_argument("--early_stopping", dest="early_stopping", help="early stopping", type=int, default = 200)
+train_parser.add_argument("--early_stopping", dest="early_stopping", help="early stopping", type=int, default = 10)
 train_parser.add_argument("--suffix_dim", dest="suffix_dim", help="suffix_dim", type=int, default = 10)
 train_parser.add_argument("--lrate", dest="lrate", help="lrate", type=float, default = 0.01)
 train_parser.add_argument("--dropout_p", dest="dropout_p", help="keep fraction", type=float, default = 1.0)

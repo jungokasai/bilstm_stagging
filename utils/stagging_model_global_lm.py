@@ -19,7 +19,7 @@ class Stagging_Model_Global_LM(Stagging_Model_LM):
         return global_loss
     def add_top_k_global(self, output, prev_scores, beam_size, post_first, prev_correct_so_far, gold_original):
        
-        output = output + prev_scores ## post_first: [batch_size (self.batch_size*beam_size), nb_tags], first iteration: [self.batch_size, nb_tags]
+        output = tf.nn.log_softmax(output) + prev_scores ## post_first: [batch_size (self.batch_size*beam_size), nb_tags], first iteration: [self.batch_size, nb_tags]
         if post_first:
             ## prev_correct_so_far [b, B]
             shape = tf.shape(prev_correct_so_far)
@@ -158,11 +158,16 @@ class Stagging_Model_Global_LM(Stagging_Model_LM):
 	#current_global_loss = tf.reduce_sum(correct_so_far*scores, axis=1) - tf.reduce_sum(scores, axis=1) # [b]
 	#current_global_loss = -tf.reduce_sum(correct_so_far*tf.nn.log_softmax(scores), axis=1)  # [b]
 	#current_global_loss = tf.log(tf.reduce_sum(tf.exp(scores), axis=1))-gold_scores  # [b]  original
-        epsilon = 10**(-9)
+        #epsilon = 10**(-9)
 	#current_global_loss = tf.log(epsilon+tf.reduce_sum(tf.exp(scores), axis=1))-gold_scores  # [b]  original
-	current_global_loss = tf.log(tf.reduce_sum(tf.exp(scores), axis=1))-gold_scores  # [b]  original
-        current_global_loss = tf.minimum(current_global_loss, tf.ones(tf.shape(current_global_loss))*1000)
-        current_global_loss = tf.maximum(current_global_loss, tf.ones(tf.shape(current_global_loss))*(-1000))
+        #scores = tf.maximum(scores, tf.ones(tf.shape(scores))*(-100))
+        #scores = tf.minimum(scores, tf.ones(tf.shape(scores))*(100))
+	#current_global_loss = tf.log(tf.reduce_sum(tf.exp(scores), axis=1))-gold_scores  # [b]  original
+	current_global_loss = -gold_scores  # [b]  debug
+        normalizer = tf.log(tf.reduce_sum(tf.exp(scores), axis=1))
+        normalizer = tf.minimum(normalizer, tf.ones(tf.shape(current_global_loss))*10)
+        #normalizer = tf.maximum(normalizer, tf.ones(tf.shape(current_global_loss))*(-10))
+        #current_global_loss += normalizer
 	#current_global_loss = 1.0
 	#current_global_loss = tf.log(tf.reduce_sum(tf.exp(scores), axis=1))-scores[:, 0]  # [b]
 	global_loss = current_global_loss*tf.cast(tf.equal(nbs_fall, tf.ones(tf.shape(nbs_fall))), tf.float32) + prev_global_loss*tf.cast(tf.equal(nbs_fall, tf.zeros(tf.shape(nbs_fall))), tf.float32) ## [b]
@@ -230,16 +235,13 @@ class Stagging_Model_Global_LM(Stagging_Model_LM):
             feed[self.keep_prob] = self.opts.dropout_p
             feed[self.hidden_prob] = self.opts.hidden_p
             feed[self.input_keep_prob] = self.opts.input_dp
-            feed[self.keep_prob] = 1.0 
-            feed[self.hidden_prob] = 1.0 
-            feed[self.input_keep_prob] = 1.0 
             train_op = self.train_op
             #train_op = tf.no_op()
             _, loss, accuracy, predictions, global_loss = session.run([train_op, self.loss, self.accuracy, self.predictions, self.global_loss], feed_dict=feed)
-#            for i in xrange(global_loss.shape[0]):
-#                print(i)
-#                print(global_loss[i, :])
-#
+            #for i in xrange(global_loss.shape[0]):
+            #    print(i)
+            #    print(global_loss[i, :])
+
             #for i in xrange(17):
             #    print(i)
             #    print(global_loss_test[i, :])
