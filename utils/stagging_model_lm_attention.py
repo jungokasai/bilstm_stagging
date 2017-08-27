@@ -291,7 +291,7 @@ class Stagging_Model_LM_Attention(Stagging_Model):
         self.opts = opts
         self.test_opts = test_opts
         self.loader = Dataset(opts, test_opts)
-        self.batch_size = 100
+        self.batch_size = 50
         #self.batch_size = 32
         self.beam_size = beam_size
         self.add_placeholders()
