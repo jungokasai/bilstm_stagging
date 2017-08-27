@@ -12,7 +12,7 @@ import sys
 import time
 
 
-class Stagging_Model_LM(Stagging_Model):
+class Stagging_Model_LM_Attention(Stagging_Model):
 
     def add_stag_embedding_mat(self):
         with tf.variable_scope('stag_embedding') as scope:
