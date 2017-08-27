@@ -30,8 +30,8 @@ def attention_equation(forward_h, backward_hs, backward_h, weights):
     n, b, d = shape[0], shape[1], shape[2]
     backward_hs = tf.transpose(backward_hs, [1, 0, 2]) 
     ## [b, n, d]
-    context_vec = tf.map_fn(lambda x: get_context(x, weights), [backward_hs, forward_h]) ## [b, d]
-    output = tf.nn.tanh(tf.matmul(tf.concat([context_vec, backward_h], 1]), weights['W-context'])) 
+    context_vec = tf.map_fn(lambda x: get_context(x, weights), [backward_hs, forward_h], dtype=tf.float32) ## [b, d]
+    output = tf.nn.tanh(tf.matmul(tf.concat([context_vec, backward_h], 1), weights['W-context'])) 
     ### [b, 2d] x [2d, d] => [b, d]
     return output
 
@@ -39,12 +39,12 @@ def get_context(inputs, weights):
     backward_hs_sent = inputs[0]  ## [n, d]
     forward_h_sent = inputs[1] # [d]
     ## lstm_outputs_sent [n, d]
-    coefs = tf.matmul(tf.matmul(forward_h_sent, weights['W-attention']), tf.transpose(backward_hs_sent, [1, 0])) # [n, 1]
-    ### [d] x [d, d] => [d]
-    ### [d] x [d, n] => [n]
-    coefs = tf.nn.softmax(coefs) ## [n]
+    coefs = tf.matmul(tf.matmul(tf.expand_dims(forward_h_sent, 0), weights['W-attention']), tf.transpose(backward_hs_sent, [1, 0])) 
+    ### [1, d] x [d, d] => [1, d]
+    ### [1, d] x [d, n] => [1, n]
+    coefs = tf.nn.softmax(coefs) ## [1, n]
     #output_sent = tf.reduce_sum(coefs*tf.expand_dims(lstm_outputs_sent, 0), 1) # [n, d]
-    context_vec = tf.matmul(coefs, backward_hs_sent)
-    ### [n] x [n, d] => d
+    context_vec = tf.squeeze(tf.matmul(coefs, backward_hs_sent), 0)
+    ### [1, n] x [n, d] => [1, d] => d
     return context_vec
 

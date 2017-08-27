@@ -2,7 +2,7 @@ from __future__ import print_function
 from data_process_secsplit import Dataset
 from stagging_model import Stagging_Model
 from lstm import get_lstm_weights, lstm
-from attention import get_attention_weights, attention_equation
+from attention_lm import get_attention_weights, attention_equation
 from back_tracking import back_track
 import numpy as np
 import tensorflow as tf
