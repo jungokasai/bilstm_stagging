@@ -48,14 +48,15 @@ class Stagging_Model_LM_Attention(Stagging_Model):
         self.add_stag_embedding_mat()
         self.add_stag_dropout_mat(batch_size)
         ##
+        attention_weights = get_attention_weights('Attention', self.opts.units)
 
-        all_states = tf.scan(lambda prev, x: self.add_one_forward(prev, x, lstm_weights_list, backward_embeddings), forward_inputs_tensor, prev_init)
+        all_states = tf.scan(lambda prev, x: self.add_one_forward(prev, x, lstm_weights_list, backward_embeddings, attention_weights), forward_inputs_tensor, prev_init)
         all_predictions = all_states[1] # [seq_len, batch_size]
         all_predictions = tf.transpose(all_predictions, perm=[1, 0]) # [batch_size, seq_len]
         all_projected_outputs = all_states[3] # [seq_len, batch_size, outputs_dim]
         all_projected_outputs = tf.transpose(all_projected_outputs, perm=[1, 0, 2]) # [batch_size, seq_len, outputs_dim]
         return all_predictions, all_projected_outputs
-    def add_one_forward(self, prev_list, x, lstm_weights_list, backward_embeddings):
+    def add_one_forward(self, prev_list, x, lstm_weights_list, backward_embeddings, attention_weights):
         ## compute one word in the forward direction
         prev_cell_hiddens = prev_list[0]
         prev_cell_hidden_list = tf.split(prev_cell_hiddens, self.opts.num_layers, axis=0)
@@ -73,8 +74,7 @@ class Stagging_Model_LM_Attention(Stagging_Model):
         cell_hiddens = tf.concat(cell_hiddens, 0)
         with tf.device('/cpu:0'):
             backward_h = tf.nn.embedding_lookup(backward_embeddings, time_step) ## [batch_size, units]
-        weights = get_attention_weights('Attention', self.opts.units)
-        backward_h = attention_equation(h, backward_embeddings, backward_h, weights)
+        backward_h = attention_equation(h, backward_embeddings, backward_h, attention_weights)
         bi_h = tf.concat([h, backward_h], 1) ## [batch_size, outputs_dim]
         projected_outputs = self.add_projection(bi_h) ## [batch_size, nb_tags]
         predictions = self.add_predictions(projected_outputs) ## [batch_sizes]
@@ -121,9 +121,10 @@ class Stagging_Model_LM_Attention(Stagging_Model):
         self.add_stag_embedding_mat()
         #self.add_stag_dropout_mat(batch_size) ## unnecessary since we are only testing
         ## First Iteration has only self.batch_size configurations. For the sake of tf.scan function, calculate the first. 
+        attention_weights = get_attention_weights('Attention', self.opts.units)
         first_inputs = tf.squeeze(tf.slice(forward_inputs_tensor, [0, 0, 0], [1, -1, -1]), axis=0) ## [batch_size, inputs_dim+lm]
         forward_inputs_tensor = tf.slice(forward_inputs_tensor, [1, 0, 0], [-1, -1, -1])
-        prev_init = self.add_one_beam_forward(prev_init, first_inputs, lstm_weights_list, backward_embeddings, beam_size, batch_size) 
+        prev_init = self.add_one_beam_forward(prev_init, first_inputs, lstm_weights_list, backward_embeddings, beam_size, batch_size, attention_weights) 
         first_predictions = tf.expand_dims(prev_init[1], 0) ## [1, batch_size]
         first_scores = tf.expand_dims(prev_init[3], 0) ## [1, batch_size, 1]
 
@@ -132,7 +133,7 @@ class Stagging_Model_LM_Attention(Stagging_Model):
         forward_inputs_tensor = tf.reshape(tf.tile(forward_inputs_tensor, [1, 1, beam_size]), [initial_shape[0], initial_shape[1]*beam_size, initial_shape[2]])
         ## [seq_len-1, self.batch_size, inputs_dim] -> [seq_len-1, self.batch_size*beam_size (B*b), inputs_dim]
         batch_size = initial_shape[1]*beam_size ## Bb
-        all_states = tf.scan(lambda prev, x: self.add_one_beam_forward(prev, x, lstm_weights_list, backward_embeddings, beam_size, batch_size, True), forward_inputs_tensor, prev_init, back_prop=False) ## no backprop for testing reuse projection weights from the first iteration
+        all_states = tf.scan(lambda prev, x: self.add_one_beam_forward(prev, x, lstm_weights_list, backward_embeddings, beam_size, batch_size, attention_weights, True), forward_inputs_tensor, prev_init, back_prop=False) ## no backprop for testing reuse projection weights from the first iteration
         back_pointers = all_states[4] # [seq_len-1, batch_size]
         back_pointers = tf.transpose(back_pointers, perm=[1, 0])
         all_predictions = all_states[1] # [seq_len-1, batch_size]
@@ -143,7 +144,7 @@ class Stagging_Model_LM_Attention(Stagging_Model):
         all_scores = tf.squeeze(all_scores, axis=2)
         all_scores = tf.transpose(all_scores, perm=[1, 0])
         return all_predictions, all_scores, back_pointers
-    def add_one_beam_forward(self, prev_list, x, lstm_weights_list, backward_embeddings, beam_size, batch_size, post_first=False):
+    def add_one_beam_forward(self, prev_list, x, lstm_weights_list, backward_embeddings, beam_size, batch_size, attention_weights, post_first=False):
         ## compute one word in the forward direction
         prev_cell_hiddens = prev_list[0] ## [2, batch_size, units*num_layers]
         prev_cell_hidden_list = tf.split(prev_cell_hiddens, self.opts.num_layers, axis=2) ## [[2, batch_size, units] x num_layers]
@@ -164,8 +165,7 @@ class Stagging_Model_LM_Attention(Stagging_Model):
             backward_h = tf.nn.embedding_lookup(backward_embeddings, time_step) ## [self.batch_size, units]
         if post_first: ## batch_size = self.batch_size*beam_size
             backward_h = tf.reshape(tf.tile(backward_h, [1, beam_size]), [batch_size, -1]) ## [batch_size, units]
-        weights = get_attention_weights('Attention', self.opts.units)
-        backward_h = attention_equation(h, backward_embeddings, backward_h, weights)
+        backward_h = attention_equation(h, backward_embeddings, backward_h, attention_weights)
         bi_h = tf.concat([h, backward_h], 1) ## [batch_size, outputs_dim]
         projected_outputs = self.add_projection(bi_h, post_first) ## [batch_size, nb_tags]
         scores, indices = self.add_top_k(projected_outputs, prev_scores, beam_size, post_first) ## [self.batch_size, beam_size], [self.batch_size, beam_size]
