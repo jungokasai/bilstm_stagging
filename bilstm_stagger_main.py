@@ -50,7 +50,7 @@ test_parser.add_argument("--jk_test", dest="jk_test", help="jk data for testing"
 test_parser.add_argument("--tag_test", dest="tag_test", help="tag data for testing")
 ## Model Information
 test_parser.add_argument("--model", dest="modelname", help="model name")
-test_parser.add_argument("--beam_size", dest="beam_size", help="beam size", default=16)
+test_parser.add_argument("--beam_size", dest="beam_size", help="beam size", default=128)
 ## Output Options
 test_parser.add_argument("--get_accuracy",  help="compute tag accuracy", action="store_true", default=False)
 test_parser.add_argument("--save_tags", dest="save_tags", help="save 1-best tags")

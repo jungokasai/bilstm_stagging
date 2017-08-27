@@ -19,6 +19,7 @@ class Stagging_Model_Global_LM(Stagging_Model_LM):
         return global_loss
     def add_top_k_global(self, output, prev_scores, beam_size, post_first, prev_correct_so_far, gold_original, time_step):
         time_step = tf.cast(time_step, tf.float32)
+        local_output = output
         output = (output + prev_scores*time_step)/(time_step+1.0) ## post_first: [batch_size (self.batch_size*beam_size), nb_tags], first iteration: [self.batch_size, nb_tags]
         #output = output + prev_scores ## post_first: [batch_size (self.batch_size*beam_size), nb_tags], first iteration: [self.batch_size, nb_tags]
         if post_first:
@@ -27,8 +28,9 @@ class Stagging_Model_Global_LM(Stagging_Model_LM):
             b = shape[0]
             B = shape[1]
             output = tf.reshape(output, [tf.shape(output)[0]/beam_size, self.loader.nb_tags*beam_size])
-            inputs = [tf.reshape(output, [b, B, self.loader.nb_tags]), prev_correct_so_far, tf.reshape(gold_original, [b, 1])]
-            gold_scores, local_gold_scores = tf.map_fn(lambda x: get_gold_score(x[0], x[1], x[2], self.loader.nb_tags, self.beam_size), inputs, dtype=(tf.float32, tf.float32))
+            local_output = tf.reshape(local_output, [tf.shape(local_output)[0]/beam_size, self.loader.nb_tags*beam_size])
+            inputs = [tf.reshape(output, [b, B, self.loader.nb_tags]), tf.reshape(local_output, [b, B, self.loader.nb_tags]), prev_correct_so_far, tf.reshape(gold_original, [b, 1])]
+            gold_scores, local_gold_scores = tf.map_fn(lambda x: get_gold_score(x[0], x[1], x[2], x[3], self.loader.nb_tags, self.beam_size), inputs, dtype=(tf.float32, tf.float32))
             #gold_scores = tf.map_fn(lambda x: get_gold_score(x[0], x[1], x[2], self.loader.nb_tags), inputs, dtype=tf.float32)
             gold_scores = tf.reshape(gold_scores, [b])
             local_gold_scores = tf.reshape(local_gold_scores, [b])
@@ -97,7 +99,7 @@ class Stagging_Model_Global_LM(Stagging_Model_LM):
         all_scores = tf.squeeze(all_scores, axis=2)
         all_scores = tf.transpose(all_scores, perm=[1, 0])
         self.global_loss = all_states[5]
-        self.loss = self.get_global_loss(all_states[5]) + (tf.reduce_sum(tf.concat([first_local_loss, all_states[-1]], 0)*non_paddings))/tf.reduce_sum(non_paddings) ## [n, b]
+        self.loss = self.get_global_loss(all_states[5]) #+ (tf.reduce_sum(tf.concat([first_local_loss, all_states[-1]], 0)*non_paddings))/tf.reduce_sum(non_paddings) ## [n, b]
         self.correct_so_far = tf.reshape(all_states[6], [-1, batch_size/beam_size, beam_size])
         return all_predictions, all_scores, back_pointers
     def add_one_beam_forward(self, prev_list, inputs, lstm_weights_list, backward_embeddings, beam_size, batch_size, post_first=False):

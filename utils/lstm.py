@@ -24,6 +24,16 @@ def get_lstm_weights(name, inputs_dim, units, batch_size, hidden_prob, beam_size
 	    weights['dropout_post_first'] = [tf.nn.dropout(dummy_dp, hidden_prob) for _ in xrange(4)]
     return weights
 
+def get_decoder_weights(weights, name, inputs_dim, units, reuse=False):
+    with tf.variable_scope(name) as scope:
+        if reuse:
+            scope.reuse_variables()
+    weights['theta_x_i'] = tf.get_variable('theta_x_i_decoder', [inputs_dim, units])
+    weights['theta_x_f'] = tf.get_variable('theta_x_f_decoder', [inputs_dim, units])
+    weights['theta_x_o'] = tf.get_variable('theta_x_o_decoder', [inputs_dim, units])
+    weights['theta_x_g'] = tf.get_variable('theta_x_g_decoder', [inputs_dim, units])
+    return weights
+
 def lstm(prev, x, weights, post_first=False): # prev = c+h
     prev_c, prev_h = tf.unstack(prev, 2, 0) # [batch_size, units]
     if post_first:

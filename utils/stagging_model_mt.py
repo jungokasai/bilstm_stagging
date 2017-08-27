@@ -1,7 +1,7 @@
 from __future__ import print_function
 from data_process_secsplit import Dataset
 from stagging_model import Stagging_Model
-from lstm import get_lstm_weights, lstm
+from lstm import get_lstm_weights, lstm, get_decoder_weights
 from back_tracking import back_track
 import numpy as np
 import tensorflow as tf
@@ -11,7 +11,20 @@ import sys
 import time
 
 
-class Stagging_Model_LM(Stagging_Model):
+class Stagging_Model_MT(Stagging_Model):
+    def add_lstm(self, inputs, i, name, reuse=False): ## need to access c
+        prev_init = tf.zeros([2, tf.shape(inputs)[1], self.opts.units])  # [2, batch_size, num_units]
+        #prev_init = tf.zeros([2, 100, self.opts.units])  # [2, batch_size, num_units]
+        if i == 0:
+            inputs_dim = self.inputs_dim
+        else:
+            inputs_dim = self.opts.units
+        weights = get_lstm_weights('{}_LSTM_layer{}'.format(name, i), inputs_dim, self.opts.units, tf.shape(inputs)[1], self.hidden_prob, self.beam_size, reuse)
+        cell_hidden = tf.scan(lambda prev, x: lstm(prev, x, weights), inputs, prev_init)
+         #cell_hidden [seq_len, 2, batch_size, units]
+        c = tf.unstack(cell_hidden, 2, axis=1)[0] #[seq_len, batch_size, units]
+        h = tf.unstack(cell_hidden, 2, axis=1)[1] #[seq_len, batch_size, units]
+        return c, h
 
     def add_stag_embedding_mat(self):
         with tf.variable_scope('stag_embedding') as scope:
@@ -27,42 +40,49 @@ class Stagging_Model_LM(Stagging_Model):
         return inputs 
 
 ## Greedy Supertagging
-    def add_forward_path(self, forward_inputs_tensor, backward_embeddings, reuse=False):
-        batch_size = tf.shape(forward_inputs_tensor)[1]
-        prev_init = [tf.zeros([2*self.opts.num_layers, batch_size, self.opts.units]), tf.zeros([batch_size], tf.int32), 0, tf.zeros([batch_size, self.loader.nb_tags])]
+    def add_forward_path_mt(self, forward_cells, forward_hs, forward_inputs_tensor):
+        # forward_cells list of [n, b, d] # num_layers elements
+        ## forward_inputs_tensor: [n, b, d]
+        shape = tf.shape(forward_inputs_tensor)
+        seq_len, batch_size = shape[0], shape[1] ## n, b
+        #batch_size = tf.shape(forward_cells)[1]
+        prev_cell_hiddens = [tf.stack([forward_cell[-1], forward_h[-1]], 0) for forward_cell, forward_h in zip(forward_cells, forward_hs)]
+        prev_cell_hiddens = tf.concat(prev_cell_hiddens, 0) # [2*num_layers, b, d]
+        prev_init = [prev_cell_hiddens, tf.zeros([batch_size], tf.int32), tf.zeros([batch_size, self.loader.nb_tags])]
+        #prev_init = [tf.zeros([2*self.opts.num_layers, batch_size, self.opts.units]), tf.zeros([batch_size], tf.int32), tf.zeros([batch_size, self.loader.nb_tags])]
         ## We need the following memory states (list of four elements): 
         ## 1. LSTM cell and h memories for each layer: [2*num_layers, batch_size, num_units] 
         ## 2. Previous predictions (stag_idx): [batch_size]
-        ## 3. Time step for referencing backward path: int
         ## In addition, though it's not a memory state, we also add projected_outputs for calculation of loss: [batch_size, outputs_dim]
         name = 'Forward'
         ## Define all the necessary weights for recursion
         lstm_weights_list = []
         for i in xrange(self.opts.num_layers):
             if i == 0:
-                inputs_dim = self.inputs_dim + self.opts.lm
+                inputs_dim = self.inputs_dim
             else:
                 inputs_dim = self.opts.units
-            lstm_weights_list.append(get_lstm_weights('{}_LSTM_layer{}'.format(name, i), inputs_dim, self.opts.units, batch_size, self.hidden_prob, 0, reuse))
+            lstm_weights_list.append(get_lstm_weights('{}_LSTM_layer{}'.format(name, i), inputs_dim, self.opts.units, batch_size, self.hidden_prob, 0, reuse=True))
+        lstm_weights_list[0] = get_decoder_weights(lstm_weights_list[0], '{}_LSTM_layer{}'.format(name, 0), self.opts.lm, self.opts.units)
         self.add_stag_embedding_mat()
         self.add_stag_dropout_mat(batch_size)
         ##
-
-        all_states = tf.scan(lambda prev, x: self.add_one_forward(prev, x, lstm_weights_list, backward_embeddings), forward_inputs_tensor, prev_init)
+        all_states = tf.scan(lambda prev, x: self.add_one_forward_mt(prev, x, lstm_weights_list, forward_inputs_tensor), forward_inputs_tensor, prev_init)
         all_predictions = all_states[1] # [seq_len, batch_size]
         all_predictions = tf.transpose(all_predictions, perm=[1, 0]) # [batch_size, seq_len]
-        all_projected_outputs = all_states[3] # [seq_len, batch_size, outputs_dim]
+        all_projected_outputs = all_states[2] # [seq_len, batch_size, outputs_dim]
         all_projected_outputs = tf.transpose(all_projected_outputs, perm=[1, 0, 2]) # [batch_size, seq_len, outputs_dim]
         return all_predictions, all_projected_outputs
-    def add_one_forward(self, prev_list, x, lstm_weights_list, backward_embeddings):
+
+    def add_one_forward_mt(self, prev_list, x, lstm_weights_list, forward_inputs_tensor):
         ## compute one word in the forward direction
+        ## no need to use x for now x is just dummy for getting a sequence loop
         prev_cell_hiddens = prev_list[0]
         prev_cell_hidden_list = tf.split(prev_cell_hiddens, self.opts.num_layers, axis=0)
         prev_predictions = prev_list[1]
-        time_step = prev_list[2]
         prev_embedding = self.add_stag_embedding(prev_predictions) ## [batch_size, inputs_dim]
-        prev_embedding = prev_embedding*self.stag_dropout_mat
-        h = tf.concat([x, prev_embedding], 1)
+        h = prev_embedding*self.stag_dropout_mat
+        #h = tf.concat([x, prev_embedding], 1)
         cell_hiddens = []
         for i in xrange(self.opts.num_layers):
             weights = lstm_weights_list[i]
@@ -70,13 +90,9 @@ class Stagging_Model_LM(Stagging_Model):
             cell_hiddens.append(cell_hidden)
             h = tf.unstack(cell_hidden, 2, axis=0)[1] ## [batch_size, units]
         cell_hiddens = tf.concat(cell_hiddens, 0)
-        with tf.device('/cpu:0'):
-            backward_h = tf.nn.embedding_lookup(backward_embeddings, time_step) ## [batch_size, units]
-        bi_h = tf.concat([h, backward_h], 1) ## [batch_size, outputs_dim]
-        projected_outputs = self.add_projection(bi_h) ## [batch_size, nb_tags]
+        projected_outputs = self.add_projection(h) ## [batch_size, nb_tags]
         predictions = self.add_predictions(projected_outputs) ## [batch_sizes]
-        time_step += 1
-        new_state = [cell_hiddens, predictions, time_step, projected_outputs]
+        new_state = [cell_hiddens, predictions, projected_outputs]
         return new_state
 
     def add_predictions(self, output):
@@ -97,8 +113,8 @@ class Stagging_Model_LM(Stagging_Model):
 
 ## Supertagging
 ## Beware of the following notation: batch_size = self.batch_size*beam_size 
-    def add_forward_beam_path(self, forward_inputs_tensor, backward_embeddings, beam_size):
-        batch_size = tf.shape(forward_inputs_tensor)[1] ## batch_size = self.batch_size = b
+    def add_forward_beam_path_mt(self, forward_inputs_tensor, backward_embeddings, beam_size):
+        batch_size = tf.shape(forward_inputs_tensor)[2] ## batch_size = self.batch_size = b
         prev_init = [tf.zeros([2, batch_size, self.opts.num_layers*self.opts.units]), tf.zeros([batch_size], tf.int32), 0, tf.zeros([batch_size, 1]), tf.zeros([batch_size], tf.int32)]
         ## We need the following memory states (list of four elements): 
         ## 1. LSTM cell and h memories for each layer: [2, batch_size, units*num_layers] 
@@ -140,7 +156,7 @@ class Stagging_Model_LM(Stagging_Model):
         all_scores = tf.squeeze(all_scores, axis=2)
         all_scores = tf.transpose(all_scores, perm=[1, 0])
         return all_predictions, all_scores, back_pointers
-    def add_one_beam_forward(self, prev_list, x, lstm_weights_list, backward_embeddings, beam_size, batch_size, post_first=False):
+    def add_one_beam_forward_mt(self, prev_list, x, lstm_weights_list, backward_embeddings, beam_size, batch_size, post_first=False):
         ## compute one word in the forward direction
         prev_cell_hiddens = prev_list[0] ## [2, batch_size, units*num_layers]
         prev_cell_hidden_list = tf.split(prev_cell_hiddens, self.opts.num_layers, axis=2) ## [[2, batch_size, units] x num_layers]
@@ -284,6 +300,7 @@ class Stagging_Model_LM(Stagging_Model):
         ## n: # tokens in the sentence
         ## B: beam_size
         self.opts = opts
+        self.opts.bi = 0 ## no bidirecion
         self.test_opts = test_opts
         self.loader = Dataset(opts, test_opts)
         self.batch_size = 100
@@ -302,25 +319,28 @@ class Stagging_Model_LM(Stagging_Model):
         if self.opts.jk_dim > 0:
             inputs_list.append(self.add_jackknife_embedding())
         inputs_tensor = tf.concat(inputs_list, 2) ## [seq_len, batch_size, inputs_dim]
-        forward_inputs_tensor = inputs_tensor
+        #forward_inputs_tensor = inputs_tensor
+        forward_inputs_tensor = tf.reverse(inputs_tensor, [0])
 
-        ## Backward path is deterministic, just run it first and make it embeddings
-        if self.opts.bi:
-            backward_inputs_tensor = self.add_dropout(tf.reverse(inputs_tensor, [0]), self.input_keep_prob)
-            for i in xrange(self.opts.num_layers):
-                backward_inputs_tensor = self.add_dropout(self.add_lstm(backward_inputs_tensor, i, 'Backward'), self.keep_prob) ## [seq_len, batch_size, units]
-            backward_inputs_tensor = tf.reverse(backward_inputs_tensor, [0])  ## [seq_len, batch_size, units]
-        ## backward path is done
         forward_inputs_tensor = self.add_dropout(forward_inputs_tensor, self.input_keep_prob)
+        forward_cells = []
+        forward_hs = []
+        for i in xrange(self.opts.num_layers):
+            c, h = self.add_lstm(forward_inputs_tensor, i, 'Forward') ## [seq_len, batch_size, units]
+            forward_hs.append(h)
+            h = self.add_dropout(h, self.keep_prob) ## [seq_len, batch_size, units]
+            forward_cells.append(c)
+            forward_inputs_tensor = h
 
-        if beam_size > 0:
-            self.predictions, self.scores, self.back_pointers = self.add_forward_beam_path(forward_inputs_tensor, backward_inputs_tensor, beam_size) ## [seq_len, batch_size, nb_tags]
-            self.weight = tf.not_equal(self.inputs_placeholder_list[0], tf.zeros(tf.shape(self.inputs_placeholder_list[0]), tf.int32)) # [self.batch_size, seq_len]
-            self.weight_beam = tf.reshape(tf.tile(self.weight, [1, beam_size]), [-1, tf.shape(self.weight)[1]]) # [batch_size, seq_len]
-        else:
-            self.predictions, projected_outputs = self.add_forward_path(forward_inputs_tensor, backward_inputs_tensor) ## [seq_len, batch_size, nb_tags]
-            self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_list[0], tf.zeros(tf.shape(self.inputs_placeholder_list[0]), tf.int32)), tf.float32) ## [batch_size, seq_len]
-            self.add_lm_accuracy()
-            self.loss = self.add_loss_op(projected_outputs)
-            self.train_op = self.add_train_op(self.loss)
+
+#        if beam_size > 0:
+#            self.predictions, self.scores, self.back_pointers = self.add_forward_beam_path_mt(forward_inputs_tensor, beam_size) ## [seq_len, batch_size, nb_tags]
+#            self.weight = tf.not_equal(self.inputs_placeholder_list[0], tf.zeros(tf.shape(self.inputs_placeholder_list[0]), tf.int32)) # [self.batch_size, seq_len]
+#            self.weight_beam = tf.reshape(tf.tile(self.weight, [1, beam_size]), [-1, tf.shape(self.weight)[1]]) # [batch_size, seq_len]
+#        else:
+        self.predictions, projected_outputs = self.add_forward_path_mt(forward_cells, forward_hs, forward_inputs_tensor) ## [seq_len, batch_size, nb_tags]
+        self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_list[0], tf.zeros(tf.shape(self.inputs_placeholder_list[0]), tf.int32)), tf.float32) ## [batch_size, seq_len]
+        self.add_lm_accuracy()
+        self.loss = self.add_loss_op(projected_outputs)
+        self.train_op = self.add_train_op(self.loss)
 #        if self.opts.bi:

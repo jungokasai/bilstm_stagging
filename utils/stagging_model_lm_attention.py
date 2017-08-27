@@ -2,6 +2,7 @@ from __future__ import print_function
 from data_process_secsplit import Dataset
 from stagging_model import Stagging_Model
 from lstm import get_lstm_weights, lstm
+from attention import get_attention_weights, attention_equation
 from back_tracking import back_track
 import numpy as np
 import tensorflow as tf
@@ -72,6 +73,8 @@ class Stagging_Model_LM(Stagging_Model):
         cell_hiddens = tf.concat(cell_hiddens, 0)
         with tf.device('/cpu:0'):
             backward_h = tf.nn.embedding_lookup(backward_embeddings, time_step) ## [batch_size, units]
+        weights = get_attention_weights('Attention', self.opts.units)
+        backward_h = attention_equation(h, backward_embeddings, backward_h, weights)
         bi_h = tf.concat([h, backward_h], 1) ## [batch_size, outputs_dim]
         projected_outputs = self.add_projection(bi_h) ## [batch_size, nb_tags]
         predictions = self.add_predictions(projected_outputs) ## [batch_sizes]
@@ -161,6 +164,8 @@ class Stagging_Model_LM(Stagging_Model):
             backward_h = tf.nn.embedding_lookup(backward_embeddings, time_step) ## [self.batch_size, units]
         if post_first: ## batch_size = self.batch_size*beam_size
             backward_h = tf.reshape(tf.tile(backward_h, [1, beam_size]), [batch_size, -1]) ## [batch_size, units]
+        weights = get_attention_weights('Attention', self.opts.units)
+        backward_h = attention_equation(h, backward_embeddings, backward_h, weights)
         bi_h = tf.concat([h, backward_h], 1) ## [batch_size, outputs_dim]
         projected_outputs = self.add_projection(bi_h, post_first) ## [batch_size, nb_tags]
         scores, indices = self.add_top_k(projected_outputs, prev_scores, beam_size, post_first) ## [self.batch_size, beam_size], [self.batch_size, beam_size]
