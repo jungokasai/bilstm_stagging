@@ -24,8 +24,8 @@ class Dataset(object):
             path_to_tag_test = test_opts.tag_test
             path_to_jk_test = test_opts.jk_test
 
-        self.inputs_train = []
-        self.inputs_test = []
+        self.inputs_train = {}
+        self.inputs_test = {}
 
         ## indexing sents files
         f_train = open(path_to_text)
@@ -75,52 +75,75 @@ class Dataset(object):
         f_test.close()
         text_sequences = tokenizer.texts_to_sequences(texts)
         #print(map(lambda x: self.idx_to_word[x], text_sequences[self.nb_train_samples]))
-        self.inputs_train.append(text_sequences[:self.nb_train_samples])
-        self.inputs_test.append(text_sequences[self.nb_train_samples:])
+        self.inputs_train['words'] = text_sequences[:self.nb_train_samples]
+        self.inputs_test['words'] = text_sequences[self.nb_train_samples:]
         ## indexing sents files ends
         ## indexing suffixes 
-        suffix = tokenizer.suffix_extract(texts)
-        suffix_tokenizer = Tokenizer()
-        suffix_tokenizer.fit_on_texts(suffix[:self.nb_train_samples], non_split=True)
-        self.suffix_index = suffix_tokenizer.word_index
-        self.nb_suffixes = len(self.suffix_index)
-        self.idx_to_suffix = invert_dict(self.suffix_index)
-        print('Found {} unique suffixes including -unseen-.'.format(self.nb_suffixes))
-        suffix_sequences = suffix_tokenizer.texts_to_sequences(suffix, non_split=True)
-        #print(map(lambda x: self.idx_to_suffix[x], suffix_sequences[self.nb_train_samples]))
-        self.inputs_train.append(suffix_sequences[:self.nb_train_samples])
-        self.inputs_test.append(suffix_sequences[self.nb_train_samples:])
-        ## indexing suffixes ends
+        if opts.suffix_dim > 0:
+            suffix = tokenizer.suffix_extract(texts)
+            suffix_tokenizer = Tokenizer()
+            suffix_tokenizer.fit_on_texts(suffix[:self.nb_train_samples], non_split=True)
+            self.suffix_index = suffix_tokenizer.word_index
+            self.nb_suffixes = len(self.suffix_index)
+            self.idx_to_suffix = invert_dict(self.suffix_index)
+            print('Found {} unique suffixes including -unseen-.'.format(self.nb_suffixes))
+            suffix_sequences = suffix_tokenizer.texts_to_sequences(suffix, non_split=True)
+            #print(map(lambda x: self.idx_to_suffix[x], suffix_sequences[self.nb_train_samples]))
+            self.inputs_train['suffix'] = suffix_sequences[:self.nb_train_samples]
+            self.inputs_test['suffix'] = suffix_sequences[self.nb_train_samples:]
+            ## indexing suffixes ends
         ## indexing capitalization 
-        cap_sequences = tokenizer.cap_indicator(texts)
-        #print(cap_sequences[self.nb_train_samples])
-        self.inputs_train.append(cap_sequences[:self.nb_train_samples])
-        self.inputs_test.append(cap_sequences[self.nb_train_samples:])
-        ## indexing capitalization ends
-        ## indexing numbers
-        num_sequences = tokenizer.num_indicator(texts)
-        #print(num_sequences[self.nb_train_samples])
-        self.inputs_train.append(num_sequences[:self.nb_train_samples])
-        self.inputs_test.append(num_sequences[self.nb_train_samples:])
-        ## indexing numbers ends
+        if opts.cap:
+            cap_sequences = tokenizer.cap_indicator(texts)
+            #print(cap_sequences[self.nb_train_samples])
+            self.inputs_train['cap'] = cap_sequences[:self.nb_train_samples]
+            self.inputs_test['cap'] = cap_sequences[self.nb_train_samples:]
+            ## indexing capitalization ends
+            ## indexing numbers
+        if opts.num:
+            num_sequences = tokenizer.num_indicator(texts)
+            #print(num_sequences[self.nb_train_samples])
+            self.inputs_train['num'] = num_sequences[:self.nb_train_samples]
+            self.inputs_test['num'] = num_sequences[self.nb_train_samples:]
+            ## indexing numbers ends
         ## indexing jackknife files
-        f_train = open(path_to_jk)
-        texts = f_train.readlines()
-        f_train.close()
-        tokenizer = Tokenizer(lower=False) 
-        tokenizer.fit_on_texts(texts)
-        self.jk_index = tokenizer.word_index
-        self.nb_jk = len(self.jk_index)
-        self.idx_to_jk = invert_dict(self.jk_index)
-        print('Found {} unique tags including -unseen-.'.format(self.nb_jk))
-        f_test = open(path_to_jk_test)
-        texts = texts + f_test.readlines() ## do not lowercase tCO
-        f_test.close()
-        jk_sequences = tokenizer.texts_to_sequences(texts)
-        #print(map(lambda x: self.idx_to_jk[x], jk_sequences[self.nb_train_samples]))
-        self.inputs_train.append(jk_sequences[:self.nb_train_samples])
-        self.inputs_test.append(jk_sequences[self.nb_train_samples:])
-        ## indexing jackknife files ends
+        if opts.jk_dim > 0:
+            f_train = open(path_to_jk)
+            texts = f_train.readlines()
+            f_train.close()
+            tokenizer = Tokenizer(lower=False) 
+            tokenizer.fit_on_texts(texts)
+            self.jk_index = tokenizer.word_index
+            self.nb_jk = len(self.jk_index)
+            self.idx_to_jk = invert_dict(self.jk_index)
+            print('Found {} unique tags including -unseen-.'.format(self.nb_jk))
+            f_test = open(path_to_jk_test)
+            texts = texts + f_test.readlines() ## do not lowercase tCO
+            f_test.close()
+            jk_sequences = tokenizer.texts_to_sequences(texts)
+            #print(map(lambda x: self.idx_to_jk[x], jk_sequences[self.nb_train_samples]))
+            self.inputs_train['jk'] = jk_sequences[:self.nb_train_samples]
+            self.inputs_test['jk'] = jk_sequences[self.nb_train_samples:]
+            ## indexing jackknife files ends
+        ## indexing char files
+        if opts.chars_dim > 0:
+            f_train = open(path_to_text)
+            texts = f_train.readlines()
+            f_train.close()
+            tokenizer = Tokenizer(lower=False,char_encoding=True) 
+            tokenizer.fit_on_texts(texts)
+            self.char_index = tokenizer.word_index
+            self.nb_chars = len(self.char_index)
+            self.idx_to_char = invert_dict(self.char_index)
+            print('Found {} unique characters including -unseen-.'.format(self.nb_chars))
+            f_test = open(path_to_text_test)
+            texts = texts + f_test.readlines() ## do not lowercase tCO
+            f_test.close()
+            char_sequences = tokenizer.texts_to_sequences(texts)
+            #print(map(lambda x: self.idx_to_jk[x], jk_sequences[self.nb_train_samples]))
+            self.inputs_train['chars'] = char_sequences[:self.nb_train_samples]
+            self.inputs_test['chars'] = char_sequences[self.nb_train_samples:]
+            ## indexing char files ends
         ## indexing stag files
         f_train = open(path_to_tag)
         texts = f_train.readlines()
@@ -137,19 +160,22 @@ class Dataset(object):
         f_test.close()
         tag_sequences = tokenizer.texts_to_sequences(texts)
         #print(map(lambda x: self.idx_to_tag[x], tag_sequences[self.nb_train_samples+8]))
-        self.inputs_train.append(tag_sequences[:self.nb_train_samples])
-        self.inputs_test.append(tag_sequences[self.nb_train_samples:])
+        self.inputs_train['tags'] = tag_sequences[:self.nb_train_samples]
+        self.inputs_test['tags'] = tag_sequences[self.nb_train_samples:]
 
         ## indexing stag files ends
         self.test_gold = np.hstack(tag_sequences[self.nb_train_samples:]) ## for calculation of accuracy
         ## padding the train inputs and test inputs
-        self.inputs_train = [pad_sequences(x) for x in self.inputs_train]
+        #self.inputs_train = [pad_sequences(x) for x in self.inputs_train]
+        self.inputs_train = {key: pad_sequences(x, key) for key, x in self.inputs_train.items()}
         random.seed(0)
         perm = np.arange(self.nb_train_samples)
         random.shuffle(perm)
-        self.inputs_train = [x[perm] for x in self.inputs_train]
+        self.inputs_train = {key: x[perm] for key, x in self.inputs_train.items()}
+        #self.inputs_train = [x[perm] for x in self.inputs_train]
 
-        self.inputs_test = [pad_sequences(x) for x in self.inputs_test]
+        #self.inputs_test = [pad_sequences(x) for x in self.inputs_test]
+        self.inputs_test = {key: pad_sequences(x, key) for key, x in self.inputs_test.items()}
 
         ## setting the current indices
         self._index_in_epoch = 0
@@ -172,6 +198,24 @@ class Dataset(object):
 #
     def next_batch(self, batch_size):
 
+#        start = self._index_in_epoch
+#        if self._index_in_epoch >= self.nb_train_samples:
+#                # iterate until the very end do not throw away
+#            self._index_in_epoch = 0
+#            self._epoch_completed+=1
+#            perm = np.arange(self.nb_train_samples)
+#            random.shuffle(perm)
+#            self.inputs_train = [x[perm] for x in self.inputs_train]
+#            return False
+#        self._index_in_epoch += batch_size
+#        end = self._index_in_epoch
+#        self.inputs_train_batch = []
+#        for i, x in enumerate(self.inputs_train):
+#            x_batch = x[start:end]
+#            if i == 0:
+#                max_len = np.max(np.sum(x_batch!=0, axis=-1))
+#            self.inputs_train_batch.append(x_batch[:, :max_len])
+#        return True
         start = self._index_in_epoch
         if self._index_in_epoch >= self.nb_train_samples:
                 # iterate until the very end do not throw away
@@ -179,20 +223,39 @@ class Dataset(object):
             self._epoch_completed+=1
             perm = np.arange(self.nb_train_samples)
             random.shuffle(perm)
-            self.inputs_train = [x[perm] for x in self.inputs_train]
+            self.inputs_train = {key: x[perm] for key, x in self.inputs_train.items()}
             return False
         self._index_in_epoch += batch_size
         end = self._index_in_epoch
-        self.inputs_train_batch = []
-        for i, x in enumerate(self.inputs_train):
+        self.inputs_train_batch = {}
+        x = self.inputs_train['words']
+        x_batch = x[start:end]
+        max_len = np.max(np.sum(x_batch!=0, axis=1))
+        for key, x in self.inputs_train.items():
             x_batch = x[start:end]
-            if i == 0:
-                max_len = np.max(np.sum(x_batch!=0, axis=-1))
-            self.inputs_train_batch.append(x_batch[:, :max_len])
+            if key == 'chars':
+                max_word_len = np.max(np.sum(x_batch!=0, axis=2))
+                self.inputs_train_batch[key] = x_batch[:, :max_len, :max_word_len]
+            else:
+                self.inputs_train_batch[key] = x_batch[:, :max_len]
         return True
 
     def next_test_batch(self, batch_size):
 
+#        start = self._index_in_test
+#        if self._index_in_test >= self.nb_validation_samples:
+#                # iterate until the very end do not throw away
+#            self._index_in_test = 0
+#            return False
+#        self._index_in_test += batch_size
+#        end = self._index_in_test
+#        self.inputs_test_batch = []
+#        for i, x in enumerate(self.inputs_test):
+#            x_batch = x[start:end]
+#            if i == 0:
+#                max_len = np.max(np.sum(x_batch!=0, axis=-1))
+#            self.inputs_test_batch.append(x_batch[:, :max_len])
+#        return True
         start = self._index_in_test
         if self._index_in_test >= self.nb_validation_samples:
                 # iterate until the very end do not throw away
@@ -200,13 +263,19 @@ class Dataset(object):
             return False
         self._index_in_test += batch_size
         end = self._index_in_test
-        self.inputs_test_batch = []
-        for i, x in enumerate(self.inputs_test):
+        self.inputs_test_batch = {}
+        x = self.inputs_test['words']
+        x_batch = x[start:end]
+        max_len = np.max(np.sum(x_batch!=0, axis=1))
+        for key, x in self.inputs_test.items():
             x_batch = x[start:end]
-            if i == 0:
-                max_len = np.max(np.sum(x_batch!=0, axis=-1))
-            self.inputs_test_batch.append(x_batch[:, :max_len])
+            if key == 'chars':
+                max_word_len = np.max(np.sum(x_batch!=0, axis=2))
+                self.inputs_test_batch[key] = x_batch[:, :max_len, :max_word_len]
+            else:
+                self.inputs_test_batch[key] = x_batch[:, :max_len]
         return True
+
 
     def output_stags(self, predictions, filename):
         stags = map(lambda x: self.idx_to_tag[x], predictions)
@@ -224,16 +293,26 @@ def invert_dict(index_dict):
     return {j:i for i,j in index_dict.items()}
 
 
-#if __name__ == '__main__':
-#    class Opts(object):
-#        def __init__(self):
-#            self.task = 'Super_models'
-#            self.jackknife = 1
-#            self.embedding_dim = 100
-#    opts = Opts()
-#    data_loader = Dataset(opts)
-#    data_loader.next_batch(2)
-#    print(data_loader.inputs_train_batch[0])
+if __name__ == '__main__':
+    class Opts(object):
+        def __init__(self):
+            self.jackknife = 1
+            self.embedding_dim = 100
+            #data_dir = '../project/tag_wsj'
+            data_dir = 'sample_data'
+            self.text_train = data_dir + '/sents/train.txt'
+            self.tag_train = data_dir + '/predicted_stag/train.txt'
+            self.jk_train = data_dir + '/predicted_stag/train.txt'
+            self.text_test = data_dir + '/sents/dev.txt'
+            self.tag_test = data_dir + '/predicted_stag/dev.txt'
+            self.jk_test = data_dir + '/predicted_stag/dev.txt'
+            self.word_embeddings_file = 'glovevector/glove.6B.100d.txt'
+    opts = Opts()
+    data_loader = Dataset(opts)
+    data_loader.next_batch(2)
+    data_loader.next_test_batch(2)
+    print(data_loader.inputs_test_batch['chars'][0])
+    print(data_loader.idx_to_char)
 #    data_loader.next_test_batch(3)
 #    print(data_loader.inputs_test_batch[0])
 #

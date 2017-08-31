@@ -25,6 +25,7 @@ train_parser.add_argument("--capitalize", dest="cap", help="head capitalization"
 train_parser.add_argument("--num_indicator", dest="num", help="number indicator", type = int, default = 1)
 train_parser.add_argument("--bidirectional", dest="bi", help="bidirectional LSTM", type = int, default = 1)
 train_parser.add_argument("--max_epochs",  dest="max_epochs", help="max_epochs", type=int, default = 100)
+train_parser.add_argument("--batch_size",  dest="batch_size", help="batch size", type=int, default = 100)
 train_parser.add_argument("--num_layers",  dest="num_layers", help="number of layers", type=int, default = 2)
 train_parser.add_argument("--units", dest="units", help="hidden units size", type=int, default = 64)
 train_parser.add_argument("--seed", dest="seed", help="set seed", type= int, default = 0)
@@ -32,8 +33,15 @@ train_parser.add_argument("--jk_dim", dest="jk_dim", help="jakcknife dimension",
 train_parser.add_argument("--lm", dest="lm", help="Stag Language Model Size", type=int, default = 0)
 train_parser.add_argument("--embedding_dim", dest="embedding_dim", help="embedding dim", type=int, default = 100)
 train_parser.add_argument("--word_embeddings_file", dest="word_embeddings_file", help="embeddings file", default = 'glovevector/glove.6B.100d.txt')
-train_parser.add_argument("--early_stopping", dest="early_stopping", help="early stopping", type=int, default = 10)
+train_parser.add_argument("--early_stopping", dest="early_stopping", help="early stopping", type=int, default = 5)
 train_parser.add_argument("--suffix_dim", dest="suffix_dim", help="suffix_dim", type=int, default = 10)
+
+### char embeddings
+train_parser.add_argument("--chars_dim", dest="chars_dim", help="character embedding dim", type=int, default = 30)
+train_parser.add_argument("--chars_window_size", dest="chars_window_size", help="character embedding dim", type=int, default = 3)
+train_parser.add_argument("--nb_filters", dest="nb_filters", help="nb_filters", type=int, default = 30)
+
+### optimization
 train_parser.add_argument("--lrate", dest="lrate", help="lrate", type=float, default = 0.01)
 train_parser.add_argument("--dropout_p", dest="dropout_p", help="keep fraction", type=float, default = 1.0)
 train_parser.add_argument("--hidden_p", dest="hidden_p", help="keep fraction of hidden units", type=float, default = 1.0)
@@ -50,7 +58,7 @@ test_parser.add_argument("--jk_test", dest="jk_test", help="jk data for testing"
 test_parser.add_argument("--tag_test", dest="tag_test", help="tag data for testing")
 ## Model Information
 test_parser.add_argument("--model", dest="modelname", help="model name")
-test_parser.add_argument("--beam_size", dest="beam_size", help="beam size", default=128)
+test_parser.add_argument("--beam_size", dest="beam_size", help="beam size", default=16)
 ## Output Options
 test_parser.add_argument("--get_accuracy",  help="compute tag accuracy", action="store_true", default=False)
 test_parser.add_argument("--save_tags", dest="save_tags", help="save 1-best tags")
@@ -58,7 +66,7 @@ test_parser.add_argument("--save_tags", dest="save_tags", help="save 1-best tags
 opts = parser.parse_args()
 
 if opts.mode == "train":
-    params = ['bi', 'num_layers', 'units', 'seed', 'jk_dim', 'lm', 'embedding_dim', 'suffix_dim', 'lrate', 'dropout_p', 'hidden_p', 'input_dp', 'task']
+    params = ['bi', 'num_layers', 'units', 'seed', 'jk_dim', 'lm', 'embedding_dim', 'suffix_dim', 'cap', 'chars_dim', 'nb_filters', 'chars_window_size', 'lrate', 'dropout_p', 'hidden_p', 'input_dp', 'batch_size', 'task']
     model_dir = '{}/'.format(opts.model) + '-'.join(map(lambda x: str(getattr(opts, x)), params))
     opts.model_dir = os.path.join(opts.base_dir, model_dir)
     print('Model Dirctory: {}'.format(opts.model_dir))

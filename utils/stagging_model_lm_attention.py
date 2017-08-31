@@ -26,6 +26,12 @@ class Stagging_Model_LM_Attention(Stagging_Model):
                 stags = self.inputs_placeholder_list[6]
             inputs = tf.nn.embedding_lookup(self.stag_embedding_mat, stags)  ## [batch_size, stag_dims]
         return inputs 
+    def add_lstm_dropout_mats(self, batch_size):
+        self.lstm_dropout_mats = []
+        for i in xrange(self.opts.num_layers):
+            lstm_dropout_mat = tf.ones([batch_size, self.opts.units])
+            lstm_dropout_mat = tf.nn.dropout(lstm_dropout_mat, self.keep_prob)
+            self.lstm_dropout_mats.append(lstm_dropout_mat)
 
 ## Greedy Supertagging
     def add_forward_path(self, forward_inputs_tensor, backward_embeddings, reuse=False):
@@ -47,6 +53,7 @@ class Stagging_Model_LM_Attention(Stagging_Model):
             lstm_weights_list.append(get_lstm_weights('{}_LSTM_layer{}'.format(name, i), inputs_dim, self.opts.units, batch_size, self.hidden_prob, 0, reuse))
         self.add_stag_embedding_mat()
         self.add_stag_dropout_mat(batch_size)
+        self.add_lstm_dropout_mats(batch_size)
         ##
         attention_weights = get_attention_weights('Attention', self.opts.units)
 
@@ -71,6 +78,7 @@ class Stagging_Model_LM_Attention(Stagging_Model):
             cell_hidden = lstm(prev_cell_hidden_list[i], h, weights) ## [2, batch_size, units]
             cell_hiddens.append(cell_hidden)
             h = tf.unstack(cell_hidden, 2, axis=0)[1] ## [batch_size, units]
+            h = h*self.lstm_dropout_mats[i]
         cell_hiddens = tf.concat(cell_hiddens, 0)
         with tf.device('/cpu:0'):
             backward_h = tf.nn.embedding_lookup(backward_embeddings, time_step) ## [batch_size, units]
@@ -165,6 +173,7 @@ class Stagging_Model_LM_Attention(Stagging_Model):
             backward_h = tf.nn.embedding_lookup(backward_embeddings, time_step) ## [self.batch_size, units]
         if post_first: ## batch_size = self.batch_size*beam_size
             backward_h = tf.reshape(tf.tile(backward_h, [1, beam_size]), [batch_size, -1]) ## [batch_size, units]
+            backward_embeddings = tf.reshape(tf.tile(backward_embeddings, [1, beam_size, 1]), [tf.shape(backward_embeddings)[0], batch_size, -1]) ## [batch_size, units]
         backward_h = attention_equation(h, backward_embeddings, backward_h, attention_weights)
         bi_h = tf.concat([h, backward_h], 1) ## [batch_size, outputs_dim]
         projected_outputs = self.add_projection(bi_h, post_first) ## [batch_size, nb_tags]

@@ -85,8 +85,9 @@ if __name__ == '__main__':
     config_file = sys.argv[1]
     config_file = read_config(config_file)
     print('Training is done. Run the supertagger.')
-    best_model = '/home/lily/jk964/active_projects/ud/ud_data/CoNLL17/ud-treebanks-conll2017/UD_Italian/new_data/Super_models/cap1_num1_bi1_numlayers2_embeddim300_seed0_units512_dropout0.5_inputdp0.8_hp0.5_suffix10_jkdim0/best_model'
-    data_types = config_file['data']['split'].keys()
+    best_model = '/home/fas/frank/jk964/project/tag_wsj/Stagging_Model_LM_Attention/1-2-512-0-5-100-100-10-0.01-0.5-0.5-0.8-Super_models/best_model'
+#    data_types = config_file['data']['split'].keys()
+    data_types = ['test', 'dev']
 #    print('Train POS-tagger')
 #    train_pos_tagger(config_file)
 #    print('Run Jackknife Training of POS tagging for Supertagging')

@@ -4,7 +4,7 @@ def get_attention_weights(name, units): # no dropout
     weights = {}
     with tf.variable_scope(name) as scope:
         weights['W-attention'] = tf.get_variable('W-attention', [units, units])
-        weights['W-context'] = tf.get_variable('W-context', [2*units, units])
+        #weights['W-context'] = tf.get_variable('W-context', [2*units, units])
     return weights
 
 #def attention_equation(lstm_outputs, cells, weights): 
@@ -22,17 +22,18 @@ def get_attention_weights(name, units): # no dropout
 #    return output
 #
 
-def attention_equation(forward_h, backward_hs, backward_h, weights, post_first=False): 
+def attention_equation(forward_h, backward_hs, weights): 
     ## forward_h [b, d]
     ## backward_hs [n, b, d]
     ## backward_h [b, d]
     shape = tf.shape(backward_hs)
     n, b, d = shape[0], shape[1], shape[2]
     backward_hs = tf.transpose(backward_hs, [1, 0, 2]) 
+    ## [b, n, d]
     context_vec = tf.map_fn(lambda x: get_context(x, weights), [backward_hs, forward_h], dtype=tf.float32) ## [b, d]
-    output = tf.nn.tanh(tf.matmul(tf.concat([context_vec, backward_h], 1), weights['W-context'])) 
+    #output = tf.nn.tanh(tf.matmul(tf.concat([context_vec, backward_h], 1), weights['W-context'])) 
     ### [b, 2d] x [2d, d] => [b, d]
-    return output
+    return context_vec
 
 def get_context(inputs, weights):
     backward_hs_sent = inputs[0]  ## [n, d]

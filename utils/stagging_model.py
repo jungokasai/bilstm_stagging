@@ -2,6 +2,7 @@ from __future__ import print_function
 #import matplotlib
 from data_process_secsplit import Dataset
 from lstm import get_lstm_weights, lstm
+from char_encoding import get_char_weights, encode_char
 #matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
 import numpy as np
@@ -16,7 +17,13 @@ import sys
 class Stagging_Model(object):
     def add_placeholders(self):
         #self.inputs_placeholder_list = [tf.placeholder(tf.int32, shape = [None, None]) for _ in xrange(2+self.opts.suffix+self.opts.num+self.opts.cap+self.opts.jackknife)] # 2 for text_sequences and tag_sequences, necessary no matter what
-        self.inputs_placeholder_list = [tf.placeholder(tf.int32, shape = [None, None]) for _ in xrange(6)] # 2 for text_sequences and tag_sequences, necessary no matter what
+        #self.inputs_placeholder_list = [tf.placeholder(tf.int32, shape = [None, None]) for _ in xrange(6)] # 2 for text_sequences and tag_sequences, necessary no matter what
+        self.inputs_placeholder_dict = {}
+        for feature in self.features:
+            if feature == 'chars':
+                self.inputs_placeholder_dict[feature] = tf.placeholder(tf.int32, shape = [None, None, None])
+            else:
+                self.inputs_placeholder_dict[feature] = tf.placeholder(tf.int32, shape = [None, None])
 
         self.keep_prob = tf.placeholder(tf.float32)  
         self.input_keep_prob = tf.placeholder(tf.float32)  
@@ -27,7 +34,7 @@ class Stagging_Model(object):
             with tf.variable_scope('word_embedding') as scope:
                 embedding = tf.get_variable('word_embedding_mat', self.loader.word_embeddings.shape, initializer=tf.constant_initializer(self.loader.word_embeddings))
 
-            inputs = tf.nn.embedding_lookup(embedding, self.inputs_placeholder_list[0]) ## [batch_size, seq_len, embedding_dim]
+            inputs = tf.nn.embedding_lookup(embedding, self.inputs_placeholder_dict['words']) ## [batch_size, seq_len, embedding_dim]
             inputs = tf.transpose(inputs, perm=[1, 0, 2]) # [seq_length, batch_size, embedding_dim]
         return inputs 
 
@@ -36,25 +43,38 @@ class Stagging_Model(object):
             with tf.variable_scope('suffix_embedding') as scope:
                 embedding = tf.get_variable('suffix_embedding_mat', [self.loader.nb_suffixes+1, self.opts.suffix_dim]) # +1 for padding
 
-            inputs = tf.nn.embedding_lookup(embedding, self.inputs_placeholder_list[1]) ## [batch_size, seq_len, embedding_dim]
+            inputs = tf.nn.embedding_lookup(embedding, self.inputs_placeholder_dict['suffix']) ## [batch_size, seq_len, embedding_dim]
             inputs = tf.transpose(inputs, perm=[1, 0, 2]) # [seq_length, batch_size, embedding_dim]
         return inputs 
 
     def add_cap(self):
-        inputs = tf.cast(tf.expand_dims(self.inputs_placeholder_list[2], -1), tf.float32)
+        inputs = tf.cast(tf.expand_dims(self.inputs_placeholder_dict['cap'], -1), tf.float32)
         inputs = tf.transpose(inputs, perm=[1, 0, 2]) # [seq_length, batch_size, 1]
         return inputs # [seq_length, batch_size, 1]
 
     def add_num(self):
-        inputs = tf.cast(tf.expand_dims(self.inputs_placeholder_list[3], -1), tf.float32)
+        inputs = tf.cast(tf.expand_dims(self.inputs_placeholder_dict['num'], -1), tf.float32)
         inputs = tf.transpose(inputs, perm=[1, 0, 2]) # [seq_length, batch_size, 1]
         return inputs # [seq_length, batch_size, 1]
+
+    def add_char_embedding(self):
+        with tf.device('/cpu:0'):
+            with tf.variable_scope('char_embedding') as scope:
+                embedding = tf.get_variable('char_embedding_mat', [self.loader.nb_chars+1, self.opts.chars_dim]) # +1 for padding
+
+            inputs = tf.nn.embedding_lookup(embedding, self.inputs_placeholder_dict['chars']) ## [batch_size, seq_len, word_len, embedding_dim]
+            inputs = tf.transpose(inputs, perm=[1, 0, 2, 3])
+            ## [seq_len, batch_size, word_len, embedding_dim]
+            inputs = self.add_dropout(inputs, self.input_keep_prob)
+            weights = get_char_weights(self.opts, 'char_encoding')
+            inputs = encode_char(inputs, weights) ## [seq_len, batch_size, nb_filters]
+        return inputs 
 
     def add_jackknife_embedding(self):
         with tf.device('/cpu:0'):
             with tf.variable_scope('jk_embedding') as scope:
                 embedding = tf.get_variable('jk_embedding_mat', [self.loader.nb_jk+1, self.opts.jk_dim]) # +1 for padding
-            inputs = tf.nn.embedding_lookup(embedding, self.inputs_placeholder_list[4]) ## [batch_size, seq_len, embedding_dim]
+            inputs = tf.nn.embedding_lookup(embedding, self.inputs_placeholder_dict['jk']) ## [batch_size, seq_len, embedding_dim]
             inputs = tf.transpose(inputs, perm=[1, 0, 2]) # [seq_length, batch_size, embedding_dim]
         return inputs 
 
@@ -89,29 +109,43 @@ class Stagging_Model(object):
         return outputs
 
     def add_loss_op(self, output):
-        cross_entropy = sequence_loss(output, self.inputs_placeholder_list[5], self.weight)
+        cross_entropy = sequence_loss(output, self.inputs_placeholder_dict['tags'], self.weight)
         tf.add_to_collection('total loss', cross_entropy)
         loss = tf.add_n(tf.get_collection('total loss'))
         return loss
 
     def add_accuracy(self, output):
         self.predictions = tf.cast(tf.argmax(output, 2), tf.int32) ## [batch_size, seq_len]
-        correct_predictions = self.weight*tf.cast(tf.equal(self.predictions, self.inputs_placeholder_list[5]), tf.float32)
+        correct_predictions = self.weight*tf.cast(tf.equal(self.predictions, self.inputs_placeholder_dict['tags']), tf.float32)
         self.accuracy = tf.reduce_sum(tf.cast(correct_predictions, tf.float32))/tf.reduce_sum(tf.cast(self.weight, tf.float32))
 
     def add_train_op(self, loss):
         optimizer = tf.train.AdamOptimizer()
         train_op = optimizer.minimize(loss)
         return train_op
+
+    def get_features(self):
+        self.features = ['words', 'tags']
+        if self.opts.suffix_dim > 0:
+            self.features.append('suffix')
+        if self.opts.cap:
+            self.features.append('cap')
+        if self.opts.num:
+            self.features.append('num')
+        if self.opts.jk_dim > 0:
+            self.features.append('jk')
+        if self.opts.chars_dim > 0:
+            self.features.append('chars')
     
     def __init__(self, opts, test_opts=None):
        
         self.opts = opts
         self.test_opts = test_opts
         self.loader = Dataset(opts, test_opts)
-        self.batch_size = 100
+        self.batch_size = opts.batch_size
+        self.get_features()
         self.add_placeholders()
-        self.inputs_dim = self.opts.embedding_dim + self.opts.suffix_dim + self.opts.cap + self.opts.num + self.opts.jk_dim
+        self.inputs_dim = self.opts.embedding_dim + self.opts.suffix_dim + self.opts.cap + self.opts.num + self.opts.jk_dim + self.opts.nb_filters
         self.outputs_dim = (1+self.opts.bi)*self.opts.units
         inputs_list = [self.add_word_embedding()]
         if self.opts.suffix_dim > 0:
@@ -122,6 +156,8 @@ class Stagging_Model(object):
             inputs_list.append(self.add_num())
         if self.opts.jk_dim > 0:
             inputs_list.append(self.add_jackknife_embedding())
+        if self.opts.chars_dim > 0:
+            inputs_list.append(self.add_char_embedding())
         inputs_tensor = tf.concat(inputs_list, 2) ## [seq_len, batch_size, inputs_dim]
         forward_inputs_tensor = self.add_dropout(inputs_tensor, self.input_keep_prob)
         for i in xrange(self.opts.num_layers):
@@ -135,7 +171,7 @@ class Stagging_Model(object):
             lstm_outputs = tf.concat([lstm_outputs, backward_inputs_tensor], 2) ## [seq_len, batch_size, outputs_dim]
         projected_outputs = tf.map_fn(lambda x: self.add_projection(x), lstm_outputs) #[seq_len, batch_size, nb_tags]
         projected_outputs = tf.transpose(projected_outputs, perm=[1, 0, 2]) # [batch_size, seq_len, nb_tags]
-        self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_list[0], tf.zeros(tf.shape(self.inputs_placeholder_list[0]), tf.int32)), tf.float32) ## [batch_size, seq_len]
+        self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)), tf.float32) ## [batch_size, seq_len]
         self.loss = self.add_loss_op(projected_outputs)
         self.train_op = self.add_train_op(self.loss)
         self.add_accuracy(projected_outputs)
@@ -143,8 +179,10 @@ class Stagging_Model(object):
     def run_batch(self, session, testmode = False):
         if not testmode:
             feed = {}
-            for placeholder, data in zip(self.inputs_placeholder_list, self.loader.inputs_train_batch):
-                feed[placeholder] = data
+            #for placeholder, data in zip(self.inputs_placeholder_list, self.loader.inputs_train_batch):
+            #    feed[placeholder] = data
+            for feat in self.inputs_placeholder_dict.keys():
+                feed[self.inputs_placeholder_dict[feat]] = self.loader.inputs_train_batch[feat]
             feed[self.keep_prob] = self.opts.dropout_p
             feed[self.hidden_prob] = self.opts.hidden_p
             feed[self.input_keep_prob] = self.opts.input_dp
@@ -153,8 +191,8 @@ class Stagging_Model(object):
             return loss, accuracy
         else:
             feed = {}
-            for placeholder, data in zip(self.inputs_placeholder_list, self.loader.inputs_test_batch):
-                feed[placeholder] = data
+            for feat in self.inputs_placeholder_dict.keys():
+                feed[self.inputs_placeholder_dict[feat]] = self.loader.inputs_test_batch[feat]
             feed[self.keep_prob] = 1.0
             feed[self.hidden_prob] = 1.0
             feed[self.input_keep_prob] = 1.0
