@@ -78,7 +78,7 @@ class Stagging_Model(object):
             inputs = tf.transpose(inputs, perm=[1, 0, 2]) # [seq_length, batch_size, embedding_dim]
         return inputs 
 
-    def add_lstm(self, inputs, i, name):
+    def add_lstm(self, inputs, i, name, backward=False):
         prev_init = tf.zeros([2, tf.shape(inputs)[1], self.opts.units])  # [2, batch_size, num_units]
         #prev_init = tf.zeros([2, 100, self.opts.units])  # [2, batch_size, num_units]
         if i == 0:
@@ -86,7 +86,13 @@ class Stagging_Model(object):
         else:
             inputs_dim = self.opts.units
         weights = get_lstm_weights('{}_LSTM_layer{}'.format(name, i), inputs_dim, self.opts.units, tf.shape(inputs)[1], self.hidden_prob)
-        cell_hidden = tf.scan(lambda prev, x: lstm(prev, x, weights), inputs, prev_init)
+        if backward:
+            ## backward: reset states after zero paddings
+            non_paddings = tf.transpose(self.weight, [1, 0]) ## [batch_size, seq_len] => [seq_len, batch_size]
+            non_paddings = tf.reverse(non_paddings, [0])
+            cell_hidden = tf.scan(lambda prev, x: lstm(prev, x, weights, backward=backward), [inputs, non_paddings], prev_init)
+        else:
+            cell_hidden = tf.scan(lambda prev, x: lstm(prev, x, weights), inputs, prev_init)
          #cell_hidden [seq_len, 2, batch_size, units]
         h = tf.unstack(cell_hidden, 2, axis=1)[1] #[seq_len, batch_size, units]
         return h
@@ -160,18 +166,18 @@ class Stagging_Model(object):
             inputs_list.append(self.add_char_embedding())
         inputs_tensor = tf.concat(inputs_list, 2) ## [seq_len, batch_size, inputs_dim]
         forward_inputs_tensor = self.add_dropout(inputs_tensor, self.input_keep_prob)
+        self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)), tf.float32) ## [batch_size, seq_len]
         for i in xrange(self.opts.num_layers):
             forward_inputs_tensor = self.add_dropout(self.add_lstm(forward_inputs_tensor, i, 'Forward'), self.keep_prob) ## [seq_len, batch_size, units]
         lstm_outputs = forward_inputs_tensor
         if self.opts.bi:
             backward_inputs_tensor = self.add_dropout(tf.reverse(inputs_tensor, [0]), self.input_keep_prob)
             for i in xrange(self.opts.num_layers):
-                backward_inputs_tensor = self.add_dropout(self.add_lstm(backward_inputs_tensor, i, 'Backward'), self.keep_prob) ## [seq_len, batch_size, units]
+                backward_inputs_tensor = self.add_dropout(self.add_lstm(backward_inputs_tensor, i, 'Backward', True), self.keep_prob) ## [seq_len, batch_size, units]
             backward_inputs_tensor = tf.reverse(backward_inputs_tensor, [0])
             lstm_outputs = tf.concat([lstm_outputs, backward_inputs_tensor], 2) ## [seq_len, batch_size, outputs_dim]
         projected_outputs = tf.map_fn(lambda x: self.add_projection(x), lstm_outputs) #[seq_len, batch_size, nb_tags]
         projected_outputs = tf.transpose(projected_outputs, perm=[1, 0, 2]) # [batch_size, seq_len, nb_tags]
-        self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)), tf.float32) ## [batch_size, seq_len]
         self.loss = self.add_loss_op(projected_outputs)
         self.train_op = self.add_train_op(self.loss)
         self.add_accuracy(projected_outputs)

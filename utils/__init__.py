@@ -6,3 +6,4 @@ from stagging_model_lm_attention import Stagging_Model_LM_Attention
 from stagging_model_lm_easyattention import Stagging_Model_LM_EasyAttention
 from stagging_model_global_lm import Stagging_Model_Global_LM
 from stagging_model_mt import Stagging_Model_MT
+from stagging_model_crf import Stagging_Model_CRF

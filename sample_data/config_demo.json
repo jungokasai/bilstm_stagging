@@ -7,7 +7,7 @@
               }
     },
 "stag_parameters":
-    {"model": "Stagging_Model",
+    {"model": "Stagging_Model_CRF",
      "num_layers": "2", 
      "units": "50",
      "dropout_p": "0.5",
@@ -22,6 +22,7 @@
      "max_epochs": "1000",
      "early_stopping": "1000",
      "word_embeddings_file": "glovevector/glove.6B.100d.txt",
-     "embedding_dim": "100"
+     "embedding_dim": "100",
+     "lm": "100"
     }
 }

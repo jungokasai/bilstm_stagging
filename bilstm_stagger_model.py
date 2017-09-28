@@ -57,7 +57,10 @@ def run_model_test(opts, test_opts):
     with g.as_default():
         #opts.model = 'Stagging_Model_Global_LM'
         Model = getattr(utils, opts.model)
-        model = Model(opts, test_opts, test_opts.beam_size)
+        if opts.model == 'Stagging_Model_LM':
+            model = Model(opts, test_opts, test_opts.beam_size)
+        else:
+            model = Model(opts, test_opts)
         saver = tf.train.Saver(max_to_keep=1)
         with tf.Session() as session: 
             session.run(tf.global_variables_initializer())

@@ -298,8 +298,6 @@ class Stagging_Model_LM(Stagging_Model):
         self.loader = Dataset(opts, test_opts)
         self.batch_size = opts.batch_size
         self.beam_size = beam_size
-        print('beam')
-        print(beam_size)
         self.get_features()
         self.add_placeholders()
         self.inputs_dim = self.opts.embedding_dim + self.opts.suffix_dim + self.opts.cap + self.opts.num + self.opts.jk_dim + self.opts.nb_filters

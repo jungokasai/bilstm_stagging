@@ -34,13 +34,15 @@ def get_decoder_weights(weights, name, inputs_dim, units, reuse=False):
     weights['theta_x_g'] = tf.get_variable('theta_x_g_decoder', [inputs_dim, units])
     return weights
 
-def lstm(prev, x, weights, post_first=False): # prev = c+h
+def lstm(prev, x, weights, post_first=False, backward=False): # prev = c+h
     prev_c, prev_h = tf.unstack(prev, 2, 0) # [batch_size, units]
     if post_first:
         dropout = weights['dropout_post_first']
     else:
         dropout = weights['dropout']
-
+    if backward:
+        non_paddings = tf.reshape(x[1], [1, -1, 1])## [1, b, 1] 
+        x = x[0] ## [b, d]
     i_gate = tf.nn.sigmoid(tf.matmul(prev_h*dropout[0], weights['theta_h_i'])+tf.matmul(x, weights['theta_x_i'])+weights['bias_i'])
     f_gate = tf.nn.sigmoid(tf.matmul(prev_h*dropout[1], weights['theta_h_f'])+tf.matmul(x, weights['theta_x_i'])+weights['bias_f'])
     o_gate = tf.nn.sigmoid(tf.matmul(prev_h*dropout[2], weights['theta_h_o'])+tf.matmul(x, weights['theta_x_o'])+weights['bias_o'])
@@ -51,7 +53,8 @@ def lstm(prev, x, weights, post_first=False): # prev = c+h
 
     cell_hidden = tf.stack([c, h])
     #cell_hidden = tf.stack([prev_c, prev_h])
-
+    if backward:
+        cell_hidden = cell_hidden*non_paddings
     return  cell_hidden
 
 

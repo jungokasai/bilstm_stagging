@@ -3,6 +3,7 @@ from data_process_secsplit import Dataset
 from stagging_model import Stagging_Model
 from lstm import get_lstm_weights, lstm
 from back_tracking import back_track
+from crf import crf
 import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.seq2seq import sequence_loss
@@ -11,20 +12,33 @@ import sys
 import time
 
 
-class Stagging_Model_LM(Stagging_Model):
+class Stagging_Model_CRF(Stagging_Model):
+    def feed_to_crf(self, inputs): 
+        name = 'CRF'
+        with tf.variable_scope(name) as scope:
+            proj_U = tf.get_variable('weight', [self.outputs_dim, self.opts.lm]) 
+            proj_b = tf.get_variable('bias', [self.opts.lm])
+            outputs = tf.nn.relu(tf.matmul(inputs, proj_U)+proj_b)
+        return outputs
+
+    def add_final_projection(self, inputs, reuse=False, name=None): 
+        if name is None:
+            name = 'Final_Projection'
+        with tf.variable_scope(name) as scope:
+            if reuse:
+                scope.reuse_variables()
+            proj_U = tf.get_variable('weight', [self.opts.lm, self.loader.nb_tags]) 
+            proj_b = tf.get_variable('bias', [self.loader.nb_tags])
+            outputs = tf.matmul(inputs, proj_U)+proj_b 
+        return outputs
+
 
     def add_stag_embedding_mat(self):
         with tf.variable_scope('stag_embedding') as scope:
-            self.stag_embedding_mat = tf.get_variable('stag_embedding_mat', [self.loader.nb_tags+1, self.opts.lm]) # +1 for padding
+            self.stag_embedding_mat = tf.get_variable('stag_embedding_mat', [self.loader.nb_tags+1, self.opts.lm, self.opts.lm+1]) # +1 for padding +1 for bias
     def add_stag_dropout_mat(self, batch_size):
         self.stag_dropout_mat = tf.ones([batch_size, self.opts.lm])
         self.stag_dropout_mat = tf.nn.dropout(self.stag_dropout_mat, self.input_keep_prob)
-    def add_lstm_dropout_mats(self, batch_size):
-        self.lstm_dropout_mats = []
-        for i in xrange(self.opts.num_layers):
-            lstm_dropout_mat = tf.ones([batch_size, self.opts.units])
-            lstm_dropout_mat = tf.nn.dropout(lstm_dropout_mat, self.keep_prob)
-            self.lstm_dropout_mats.append(lstm_dropout_mat)
     def add_stag_embedding(self, stags=None): # if None, use gold stags
         with tf.device('/cpu:0'):
             if stags is None:
@@ -33,58 +47,33 @@ class Stagging_Model_LM(Stagging_Model):
         return inputs 
 
 ## Greedy Supertagging
-    def add_forward_path(self, forward_inputs_tensor, backward_embeddings, reuse=False):
-        batch_size = tf.shape(forward_inputs_tensor)[1]
-        prev_init = [tf.zeros([2*self.opts.num_layers, batch_size, self.opts.units]), tf.zeros([batch_size], tf.int32), 0, tf.zeros([batch_size, self.loader.nb_tags])]
+
+    def add_crf_path(self, crf_inputs, reuse=False):
+        batch_size = tf.shape(crf_inputs)[1]
+        #prev_init = [tf.zeros([2*self.opts.num_layers, batch_size, self.opts.units]), tf.zeros([batch_size], tf.int32), 0, tf.zeros([batch_size, self.loader.nb_tags])]
+        prev_init = [tf.zeros([batch_size], tf.int32), tf.zeros([batch_size, self.loader.nb_tags])]
         ## We need the following memory states (list of four elements): 
-        ## 1. LSTM cell and h memories for each layer: [2*num_layers, batch_size, num_units] 
-        ## 2. Previous predictions (stag_idx): [batch_size]
-        ## 3. Time step for referencing backward path: int
-        ## In addition, though it's not a memory state, we also add projected_outputs for calculation of loss: [batch_size, outputs_dim]
-        name = 'Forward'
+        ## 1. Previous predictions (stag_idx): [batch_size]
+        ## 2. In addition, though it's not a memory state, we also add projected_outputs for calculation of loss: [batch_size, outputs_dim]
         ## Define all the necessary weights for recursion
-        lstm_weights_list = []
-        for i in xrange(self.opts.num_layers):
-            if i == 0:
-                inputs_dim = self.inputs_dim + self.opts.lm
-            else:
-                inputs_dim = self.opts.units
-            lstm_weights_list.append(get_lstm_weights('{}_LSTM_layer{}'.format(name, i), inputs_dim, self.opts.units, batch_size, self.hidden_prob, 0, reuse))
         self.add_stag_embedding_mat()
         self.add_stag_dropout_mat(batch_size)
-        self.add_lstm_dropout_mats(batch_size)
         ##
 
-        all_states = tf.scan(lambda prev, x: self.add_one_forward(prev, x, lstm_weights_list, backward_embeddings), forward_inputs_tensor, prev_init)
-        all_predictions = all_states[1] # [seq_len, batch_size]
+        all_states = tf.scan(lambda prev, x: self.add_one_crf(prev, x), crf_inputs, prev_init)
+        all_predictions = all_states[0] # [seq_len, batch_size]
         all_predictions = tf.transpose(all_predictions, perm=[1, 0]) # [batch_size, seq_len]
-        all_projected_outputs = all_states[3] # [seq_len, batch_size, outputs_dim]
+        all_projected_outputs = all_states[1] # [seq_len, batch_size, outputs_dim]
         all_projected_outputs = tf.transpose(all_projected_outputs, perm=[1, 0, 2]) # [batch_size, seq_len, outputs_dim]
         return all_predictions, all_projected_outputs
-    def add_one_forward(self, prev_list, x, lstm_weights_list, backward_embeddings):
-        ## compute one word in the forward direction
-        prev_cell_hiddens = prev_list[0]
-        prev_cell_hidden_list = tf.split(prev_cell_hiddens, self.opts.num_layers, axis=0)
-        prev_predictions = prev_list[1]
-        time_step = prev_list[2]
-        prev_embedding = self.add_stag_embedding(prev_predictions) ## [batch_size, inputs_dim]
-        prev_embedding = prev_embedding*self.stag_dropout_mat
-        h = tf.concat([x, prev_embedding], 1)
-        cell_hiddens = []
-        for i in xrange(self.opts.num_layers):
-            weights = lstm_weights_list[i]
-            cell_hidden = lstm(prev_cell_hidden_list[i], h, weights) ## [2, batch_size, units]
-            cell_hiddens.append(cell_hidden)
-            h = tf.unstack(cell_hidden, 2, axis=0)[1] ## [batch_size, units]
-            h = h*self.lstm_dropout_mats[i]
-        cell_hiddens = tf.concat(cell_hiddens, 0)
-        with tf.device('/cpu:0'):
-            backward_h = tf.nn.embedding_lookup(backward_embeddings, time_step) ## [batch_size, units]
-        bi_h = tf.concat([h, backward_h], 1) ## [batch_size, outputs_dim]
-        projected_outputs = self.add_projection(bi_h) ## [batch_size, nb_tags]
+    def add_one_crf(self, prev_list, crf_inputs):
+        ## crf_inputs [batch_size, lm]
+        prev_predictions = prev_list[0]
+        crf_weights = self.add_stag_embedding(prev_predictions) ## [batch_size, lm, lm+1]
+        crf_outputs = crf(crf_inputs, crf_weights) ## [batch_size, lm]
+        projected_outputs = self.add_final_projection(crf_outputs)
         predictions = self.add_predictions(projected_outputs) ## [batch_sizes]
-        time_step += 1
-        new_state = [cell_hiddens, predictions, time_step, projected_outputs]
+        new_state = [predictions, projected_outputs]
         return new_state
 
     def add_predictions(self, output):
@@ -316,25 +305,27 @@ class Stagging_Model_LM(Stagging_Model):
         if self.opts.chars_dim > 0:
             inputs_list.append(self.add_char_embedding())
         inputs_tensor = tf.concat(inputs_list, 2) ## [seq_len, batch_size, inputs_dim]
-        forward_inputs_tensor = inputs_tensor
-
-        ## Backward path is deterministic, just run it first and make it embeddings
+        forward_inputs_tensor = self.add_dropout(inputs_tensor, self.input_keep_prob)
+        for i in xrange(self.opts.num_layers):
+            forward_inputs_tensor = self.add_dropout(self.add_lstm(forward_inputs_tensor, i, 'Forward'), self.keep_prob) ## [seq_len, batch_size, units]
+        lstm_outputs = forward_inputs_tensor
         if self.opts.bi:
             backward_inputs_tensor = self.add_dropout(tf.reverse(inputs_tensor, [0]), self.input_keep_prob)
             for i in xrange(self.opts.num_layers):
                 backward_inputs_tensor = self.add_dropout(self.add_lstm(backward_inputs_tensor, i, 'Backward'), self.keep_prob) ## [seq_len, batch_size, units]
-            backward_inputs_tensor = tf.reverse(backward_inputs_tensor, [0])  ## [seq_len, batch_size, units]
-        ## backward path is done
-        forward_inputs_tensor = self.add_dropout(forward_inputs_tensor, self.input_keep_prob)
+            backward_inputs_tensor = tf.reverse(backward_inputs_tensor, [0])
+            lstm_outputs = tf.concat([lstm_outputs, backward_inputs_tensor], 2) ## [seq_len, batch_size, outputs_dim]
+        crf_inputs = tf.map_fn(lambda x: self.feed_to_crf(x), lstm_outputs) ## [seq_len, batch_size, outputs_dim] => [seq_len, batch_size, lm]
+        crf_inputs =  self.add_dropout(crf_inputs, self.keep_prob)
 
-        if beam_size > 0:
-            self.predictions, self.scores, self.back_pointers = self.add_forward_beam_path(forward_inputs_tensor, backward_inputs_tensor, beam_size) ## [seq_len, batch_size, nb_tags]
-            self.weight = tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)) # [self.batch_size, seq_len]
-            self.weight_beam = tf.reshape(tf.tile(self.weight, [1, beam_size]), [-1, tf.shape(self.weight)[1]]) # [batch_size, seq_len]
-        else:
-            self.predictions, projected_outputs = self.add_forward_path(forward_inputs_tensor, backward_inputs_tensor) ## [seq_len, batch_size, nb_tags]
-            self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)), tf.float32) ## [batch_size, seq_len]
-            self.add_lm_accuracy()
-            self.loss = self.add_loss_op(projected_outputs)
-            self.train_op = self.add_train_op(self.loss)
+#        if beam_size > 0:
+#            self.predictions, self.scores, self.back_pointers = self.add_forward_beam_path(forward_inputs_tensor, backward_inputs_tensor, beam_size) ## [seq_len, batch_size, nb_tags]
+#            self.weight = tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)) # [self.batch_size, seq_len]
+#            self.weight_beam = tf.reshape(tf.tile(self.weight, [1, beam_size]), [-1, tf.shape(self.weight)[1]]) # [batch_size, seq_len]
+#        else:
+        self.predictions, projected_outputs = self.add_crf_path(crf_inputs) ## [seq_len, batch_size, nb_tags]
+        self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)), tf.float32) ## [batch_size, seq_len]
+        self.add_lm_accuracy()
+        self.loss = self.add_loss_op(projected_outputs)
+        self.train_op = self.add_train_op(self.loss)
 #        if self.opts.bi:
