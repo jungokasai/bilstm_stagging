@@ -5,7 +5,6 @@ import json
 import tools
 from tools.converters.conllu2sents import conllu2sents
 from tools.converters.sents2conllustag import output_conllu
-
 def converter(config):
     data_types = config['data']['split'].keys()
     features = ['sents', 'gold_pos', 'gold_stag', 'gold_cpos']
@@ -55,7 +54,7 @@ def test_stagger(config, best_model, data_types):
     base_command = 'python bilstm_stagger_main.py test'
     model_info = ' --model {}'.format(best_model)
     for data_type in data_types:
-        output_file = os.path.join(base_dir, 'predicted_stag', '{}.txt'.format(data_type))
+        output_file = os.path.join(base_dir, 'predicted_stag_jkc', '{}.txt'.format(data_type))
         inputs = {}
         inputs[10] = output_file
         if not os.path.isdir(os.path.dirname(output_file)):
@@ -79,8 +78,8 @@ if __name__ == '__main__':
     train_stagger(config_file)
     print('Training is done. Run the supertagger.')
 #    best_model = get_best_model(config_file)
-#    best_model = 'data/tag_wsj/Stagging_Model_LM/1-2-512-0-5-100-100-10-0.01-0.5-0.5-0.8-Super_models/best_model'
+#    best_model = '/data/lily/jk964/active_projects/SRL/conll09/eng/model1/Stagging_Model/1-2-512-0-100-0-100-0-0-30-30-3-0.01-0.5-0.5-0.8-100-Super_models/best_model'
 #    data_types = config_file['data']['split'].keys()
-#    data_types = ['test', 'dev']
+#    data_types = ['test', 'ood']
 #    test_stagger(config_file, best_model, data_types)
 #    test_stagger(config_file, best_model, ['train'])

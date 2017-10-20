@@ -5,6 +5,8 @@ import os
 import sys
 import pickle
 import random
+import os
+import io
 
 np.random.seed(1234)
 
@@ -28,7 +30,7 @@ class Dataset(object):
         self.inputs_test = {}
 
         ## indexing sents files
-        f_train = open(path_to_text)
+        f_train = io.open(path_to_text, encoding='utf-8')
         texts = f_train.readlines()
         self.nb_train_samples = len(texts)
         f_train.close()
@@ -45,12 +47,13 @@ class Dataset(object):
         self.embeddings_index = {}
         print('Indexing word vectors.')
         #f = open('glovevector/glove.6B.{}d.txt'.format(glove_size))
-        f = open(opts.word_embeddings_file)
+        f = io.open(opts.word_embeddings_file, encoding='utf-8')
         for line in f:
-            values = line.split()
-            word = values[0]
-            coefs = np.asarray(values[1:], dtype='float32')
-            self.embeddings_index[word] = coefs
+            values = line.strip().split(' ')
+            if len(values) == opts.embedding_dim+1:
+                word = values[0]
+                coefs = np.asarray(values[1:], dtype='float32')
+                self.embeddings_index[word] = coefs
         f.close()
 
         print('Found {} word vectors.'.format(len(self.embeddings_index)))
@@ -69,7 +72,7 @@ class Dataset(object):
             self.word_embeddings[self.word_index[unseen]] = self.embeddings_index[unseen]
         self.idx_to_word = invert_dict(self.word_index)
         print('end glove indexing')
-        f_test = open(path_to_text_test)
+        f_test = io.open(path_to_text_test, encoding='utf-8')
         texts = texts +  f_test.readlines()
         self.nb_validation_samples = len(texts) - self.nb_train_samples
         f_test.close()
@@ -108,7 +111,7 @@ class Dataset(object):
             ## indexing numbers ends
         ## indexing jackknife files
         if opts.jk_dim > 0:
-            f_train = open(path_to_jk)
+            f_train = io.open(path_to_jk, encoding='utf-8')
             texts = f_train.readlines()
             f_train.close()
             tokenizer = Tokenizer(lower=False) 
@@ -117,7 +120,7 @@ class Dataset(object):
             self.nb_jk = len(self.jk_index)
             self.idx_to_jk = invert_dict(self.jk_index)
             print('Found {} unique tags including -unseen-.'.format(self.nb_jk))
-            f_test = open(path_to_jk_test)
+            f_test = io.open(path_to_jk_test, encoding='utf-8')
             texts = texts + f_test.readlines() ## do not lowercase tCO
             f_test.close()
             jk_sequences = tokenizer.texts_to_sequences(texts)
@@ -127,7 +130,7 @@ class Dataset(object):
             ## indexing jackknife files ends
         ## indexing char files
         if opts.chars_dim > 0:
-            f_train = open(path_to_text)
+            f_train = io.open(path_to_text, encoding='utf-8')
             texts = f_train.readlines()
             f_train.close()
             tokenizer = Tokenizer(lower=False,char_encoding=True) 
@@ -136,7 +139,7 @@ class Dataset(object):
             self.nb_chars = len(self.char_index)
             self.idx_to_char = invert_dict(self.char_index)
             print('Found {} unique characters including -unseen-.'.format(self.nb_chars))
-            f_test = open(path_to_text_test)
+            f_test = io.open(path_to_text_test, encoding='utf-8')
             texts = texts + f_test.readlines() ## do not lowercase tCO
             f_test.close()
             char_sequences = tokenizer.texts_to_sequences(texts)

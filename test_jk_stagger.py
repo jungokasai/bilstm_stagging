@@ -70,7 +70,7 @@ def test_stagger(config, best_model, data_types):
 if __name__ == '__main__':
     config_file = sys.argv[1]
     config_file = read_config(config_file)
-    print('Convert conllu+stag file to sentences, gold pos, and gold stag')
+#    print('Convert conllu+stag file to sentences, gold pos, and gold stag')
 #    converter(config_file)
 #    print('Train POS-tagger')
 #    train_pos_tagger(config_file)
@@ -82,6 +82,6 @@ if __name__ == '__main__':
     best_model = sys.argv[2] #'../project/tag_wsj/Stagging_Model_LM/1-2-512-0-5-100-100-10-0.01-0.5-0.5-0.8-Super_models/best_model'
     data_types = config_file['data']['split'].keys()
     #data_types = ['test', 'dev']
-    data_types = ['test', 'dev']#, 'train']
+    data_types = ['test', 'dev', 'ood']#, 'train']
     test_stagger(config_file, best_model, data_types)
 #    test_stagger(config_file, best_model, ['train'])
