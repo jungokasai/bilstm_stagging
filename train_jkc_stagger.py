@@ -70,16 +70,16 @@ if __name__ == '__main__':
     config_file = sys.argv[1]
     config_file = read_config(config_file)
 #    print('Convert conllu+stag file to sentences, gold pos, and gold stag')
-#    converter(config_file)
+    converter(config_file)
 #    print('Train POS-tagger')
 #    train_pos_tagger(config_file)
 #    print('Run Jackknife Training of POS tagging for Supertagging')
     print('Train Supertagger')
     train_stagger(config_file)
     print('Training is done. Run the supertagger.')
-#    best_model = get_best_model(config_file)
+    best_model = get_best_model(config_file)
 #    best_model = '/data/lily/jk964/active_projects/SRL/conll09/eng/model1/Stagging_Model/1-2-512-0-100-0-100-0-0-30-30-3-0.01-0.5-0.5-0.8-100-Super_models/best_model'
-#    data_types = config_file['data']['split'].keys()
+    data_types = config_file['data']['split'].keys()
 #    data_types = ['test', 'ood']
-#    test_stagger(config_file, best_model, data_types)
+    test_stagger(config_file, best_model, data_types)
 #    test_stagger(config_file, best_model, ['train'])

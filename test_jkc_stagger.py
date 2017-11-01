@@ -78,8 +78,8 @@ if __name__ == '__main__':
 #    train_stagger(config_file)
     print('Training is done. Run the supertagger.')
 #    best_model = get_best_model(config_file)
-    best_model = '/data/lily/jk964/active_projects/SRL/conll09/eng/model1/Stagging_Model/1-2-512-0-100-0-100-0-0-30-30-3-0.01-0.5-0.5-0.5-100-Super_models/best_model'
+    best_model = sys.argv[2]#'/data/lily/jk964/active_projects/SRL/conll09/eng/model1/Stagging_Model/1-2-512-0-100-0-100-0-0-30-30-3-0.01-0.5-0.5-0.5-100-Super_models/best_model'
 #    data_types = config_file['data']['split'].keys()
-    data_types = ['dev']
+    data_types = ['dev', 'test', 'ood']
     test_stagger(config_file, best_model, data_types)
-    test_stagger(config_file, best_model, ['train'])
+    #test_stagger(config_file, best_model, ['train'])
