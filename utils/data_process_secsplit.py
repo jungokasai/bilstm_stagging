@@ -38,6 +38,7 @@ class Dataset(object):
         tokenizer.fit_on_texts(texts)
         #print(tokenizer.word_index['-unseen-'])
         self.word_index = tokenizer.word_index
+        sorted_freqs = tokenizer.sorted_freqs
         self.nb_words = len(self.word_index)
         print('Found {} unique lowercased words including -unseen-.'.format(self.nb_words))
 
@@ -63,6 +64,12 @@ class Dataset(object):
         print('Found {} words not in the training set'.format(nb_unseens))
 
         self.word_embeddings = np.zeros((self.nb_words+1+nb_unseens, glove_size)) ## +1 for padding (idx 0)
+
+        ## Get Frequencies for Adversarial Training (Yasunaga et al. 2017)
+        self.word_freqs = np.zeros([self.nb_words+1+nb_unseens])
+        self.word_freqs[1:self.nb_words] = sorted_freqs ## Skip Zero Padding (Index 0)
+        self.word_freqs = self.word_freqs.astype(np.float32)
+        self.word_freqs = self.word_freqs/np.sum(self.word_freqs)
         for word, i in self.word_index.items(): ## first index the words in the training set
             embedding_vector = self.embeddings_index.get(word)
             if embedding_vector is not None: ## otherwise zero vector
@@ -88,6 +95,10 @@ class Dataset(object):
             suffix_tokenizer.fit_on_texts(suffix[:self.nb_train_samples], non_split=True)
             self.suffix_index = suffix_tokenizer.word_index
             self.nb_suffixes = len(self.suffix_index)
+            sorted_freqs = suffix_tokenizer.sorted_freqs
+            self.suffix_freqs = np.zeros([self.nb_suffixes+1]).astype(np.float32) ## +1 for zero padding
+            self.suffix_freqs[1:self.nb_suffixes] = sorted_freqs ## Skip Zero Padding (Index 0)
+            self.suffix_freqs = self.suffix_freqs/np.sum(self.suffix_freqs)
             self.idx_to_suffix = invert_dict(self.suffix_index)
             print('Found {} unique suffixes including -unseen-.'.format(self.nb_suffixes))
             suffix_sequences = suffix_tokenizer.texts_to_sequences(suffix, non_split=True)
@@ -118,6 +129,10 @@ class Dataset(object):
             tokenizer.fit_on_texts(texts)
             self.jk_index = tokenizer.word_index
             self.nb_jk = len(self.jk_index)
+            sorted_freqs = tokenizer.sorted_freqs
+            self.jk_freqs = np.zeros([self.nb_jk+1]).astype(np.float32) ## +1 for zero padding
+            self.jk_freqs[1:self.nb_jk] = sorted_freqs ## Skip Zero Padding (Index 0)
+            self.jk_freqs = self.jk_freqs/np.sum(self.jk_freqs)
             self.idx_to_jk = invert_dict(self.jk_index)
             print('Found {} unique tags including -unseen-.'.format(self.nb_jk))
             f_test = io.open(path_to_jk_test, encoding='utf-8')
@@ -137,6 +152,10 @@ class Dataset(object):
             tokenizer.fit_on_texts(texts)
             self.char_index = tokenizer.word_index
             self.nb_chars = len(self.char_index)
+            sorted_freqs = tokenizer.sorted_freqs
+            self.char_freqs = np.zeros([self.nb_chars+1]).astype(np.float32) ## +1 for zero padding
+            self.char_freqs[1:self.nb_chars] = sorted_freqs ## Skip Zero Padding (Index 0)
+            self.char_freqs = self.char_freqs/np.sum(self.char_freqs)
             self.idx_to_char = invert_dict(self.char_index)
             print('Found {} unique characters including -unseen-.'.format(self.nb_chars))
             f_test = io.open(path_to_text_test, encoding='utf-8')

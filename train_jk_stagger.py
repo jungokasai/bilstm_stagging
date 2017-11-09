@@ -55,7 +55,7 @@ def test_stagger(config, best_model, data_types):
     base_command = 'python bilstm_stagger_main.py test'
     model_info = ' --model {}'.format(best_model)
     for data_type in data_types:
-        output_file = os.path.join(base_dir, 'predicted_stag', '{}.txt'.format(data_type))
+        output_file = os.path.join(base_dir, 'predicted_stag_jk', '{}.txt'.format(data_type))
         inputs = {}
         inputs[10] = output_file
         if not os.path.isdir(os.path.dirname(output_file)):
@@ -71,16 +71,16 @@ if __name__ == '__main__':
     config_file = sys.argv[1]
     config_file = read_config(config_file)
     print('Convert conllu+stag file to sentences, gold pos, and gold stag')
-    converter(config_file)
+#    converter(config_file)
 #    print('Train POS-tagger')
 #    train_pos_tagger(config_file)
     print('Run Jackknife Training of POS tagging for Supertagging')
     print('Train Supertagger')
     train_stagger(config_file)
     print('Training is done. Run the supertagger.')
-#    best_model = get_best_model(config_file)
+    best_model = get_best_model(config_file)
 #    best_model = 'data/tag_wsj/Stagging_Model_LM/1-2-512-0-5-100-100-10-0.01-0.5-0.5-0.8-Super_models/best_model'
-#    data_types = config_file['data']['split'].keys()
+    data_types = config_file['data']['split'].keys()
 #    data_types = ['test', 'dev']
-#    test_stagger(config_file, best_model, data_types)
+    test_stagger(config_file, best_model, data_types)
 #    test_stagger(config_file, best_model, ['train'])

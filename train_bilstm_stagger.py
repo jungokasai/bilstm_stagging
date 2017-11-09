@@ -8,7 +8,8 @@ from tools.converters.sents2conllustag import output_conllu
 
 def converter(config):
     data_types = config['data']['split'].keys()
-    features = ['sents', 'gold_pos', 'gold_stag', 'gold_cpos']
+    #features = ['sents', 'gold_pos', 'gold_stag', 'gold_cpos']
+    features = ['sents', 'gold_pos', 'gold_cpos']
     for feature in features:
         for data_type in data_types:
             input_file = os.path.join(config['data']['base_dir'], config['data']['split'][data_type])
