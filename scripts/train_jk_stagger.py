@@ -8,7 +8,7 @@ from tools.converters.sents2conllustag import output_conllu
 
 def converter(config):
     data_types = config['data']['split'].keys()
-    features = ['sents', 'gold_pos', 'gold_stag', 'gold_cpos']
+    features = ['sents', 'predicted_pos', 'gold_stag', 'gold_cpos']
     for feature in features:
         for data_type in data_types:
             input_file = os.path.join(config['data']['base_dir'], config['data']['split'][data_type])
@@ -17,7 +17,7 @@ def converter(config):
                 os.makedirs(os.path.dirname(output_file))
             if feature == 'sents':
                 index = 1
-            elif feature == 'gold_pos':
+            elif feature == 'predicted_pos':
                 index = 4
             elif feature == 'gold_cpos':
                 index = 3
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     config_file = sys.argv[1]
     config_file = read_config(config_file)
     print('Convert conllu+stag file to sentences, gold pos, and gold stag')
-#    converter(config_file)
+    converter(config_file)
 #    print('Train POS-tagger')
 #    train_pos_tagger(config_file)
     print('Run Jackknife Training of POS tagging for Supertagging')

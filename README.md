@@ -56,13 +56,13 @@ After running this command, you should be getting the following files and direct
 |``utils/lstm.py``|Contains tensorflow LSTM equations. Gets imported to ``utils/stagging_model.py``.|
 |``bilstm_stagger_model.py``|Contains functions that instantiate the ``Stagging_Model`` class and train/test a model. Gets imported to ``bilstm_stagger_main.py``|
 |``bilstm_stagger_main.py``|Main file to run experiments. Reads model and data options.|
-|``train_bilstm_stagger.py``|Runs ``bilstm_stagger_main.py`` in bash according to the json file that gets passed.|
-|``jackknife_train_stagger.py``|Runs ``bilstm_stagger_main.py`` in a jackknife fashion. Uses ``train_bilstm_stagger.py``.|
+|``scripts/train_bilstm_stagger.py``|Runs ``bilstm_stagger_main.py`` in bash according to the json file that gets passed.|
+|``scripts/jackknife_train_stagger.py``|Runs ``bilstm_stagger_main.py`` in a jackknife fashion. Uses ``train_bilstm_stagger.py``.|
 ## <a name="jackknife"></a>Jackknife Training
 
 Run, for example 3-fold jackknife training by:
 ```bash
-python jackknife_training.py sample_data/config_demo.json 3
+python scripts/jackknife_training.py sample_data/config_demo.json 3
 ```
 
 ## <a name="pretrained"></a>Run a pre-trained TAG Supertagger

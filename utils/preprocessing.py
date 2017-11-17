@@ -339,16 +339,6 @@ class Tokenizer(object):
          
             vects.append(vect) 
         return vects
-    def suffix_extract(self, texts):
-        vects =[]
-        
-        for text in texts:
-            seq = text if self.char_level else text_to_word_sequence(text, self.filters, True, self.split) #lowercase suffix
-
-            vect = map(lambda x: x[-2:], seq)  # add one so pad is zero
-         
-            vects.append(vect) 
-        return vects
 
 
     def texts_to_matrix(self, texts, mode='binary'):

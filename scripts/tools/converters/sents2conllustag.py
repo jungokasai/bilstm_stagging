@@ -1,3 +1,4 @@
+import os
 def read_sents(sents_file):
     stags = []
     with open(sents_file) as fhand:
@@ -35,12 +36,13 @@ if __name__ == '__main__':
 #    output_conllu_file = 'wsj.dev.conllu_stag'
 #    output_conllu(sents_file, input_conllu_file, output_conllu_file)
     data_types = ['dev', 'test', 'train']
+    base_dir = '/data/lily/jk964/active_projects/tag/tag_wsj'
     for data_type in data_types:
         inputs = {}
-        inputs[10] = 'data/tag_wsj/predicted_stag/{}.txt'.format(data_type)
-        inputs[4] = 'data/tag_wsj/predicted_pos/{}.txt'.format(data_type)
-        input_conllu_file = 'data/tag_wsj/conllu/{}.conllu'.format(data_type)
+        inputs[10] = os.path.join(base_dir, 'gold_stag/{}.txt'.format(data_type))
+        inputs[4] = os.path.join(base_dir, 'predicted_pos/{}.txt'.format(data_type))
+        input_conllu_file = os.path.join(base_dir, 'conllu/{}.conllu'.format(data_type))
 #        output_conllu_file = 'data/tag_wsj/conllu/{}.conllu0_pos_stag'.format(data_type)
-        output_conllu(input_conllu_file, 'test', inputs)
+        output_conllu(input_conllu_file, data_type+'.txt', inputs)
 
 
