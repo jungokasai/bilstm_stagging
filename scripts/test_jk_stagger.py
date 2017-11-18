@@ -12,6 +12,7 @@ parser.add_argument('config_file', metavar='N', help='an integer for the accumul
 parser.add_argument('model_name', metavar='N', help='an integer for the accumulator')
 parser.add_argument("--no_gold",  help="compute tag accuracy", action="store_true", default=False)
 parser.add_argument("--save_probs",  help="save probabilities", action="store_true", default=False)
+parser.add_argument("--get_weight",  help="get stag weight", action="store_true", default=False)
 opts = parser.parse_args()
 
 def read_config(config_file):
@@ -41,6 +42,8 @@ def test_stagger(config, best_model, data_types, opts):
 
         if opts.save_probs: 
             output_info += ' --save_probs'
+        if opts.get_weight: 
+            output_info += ' --get_weight'
         complete_command = base_command + model_info + output_info + test_data_info
         subprocess.check_call(complete_command, shell=True)
         #output_conllu(os.path.join(base_dir, config['data']['split'][data_type]), os.path.join(base_dir, config['data']['split'][data_type]+'_stag'), inputs)

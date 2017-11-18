@@ -111,6 +111,7 @@ class Stagging_Model_Concat_Hw(object):
                 scope.reuse_variables()
             proj_U = tf.get_variable('weight', [self.outputs_dim, self.loader.nb_tags]) 
             tf.add_to_collection('stag_embedding', proj_U)
+            self.proj_U = proj_U
             proj_b = tf.get_variable('bias', [self.loader.nb_tags])
             outputs = tf.matmul(inputs, proj_U)+proj_b 
         return outputs
@@ -241,6 +242,9 @@ class Stagging_Model_Concat_Hw(object):
                 self.loader.output_stags(predictions, self.test_opts.save_tags)
                 if self.test_opts.save_probs:
                     self.loader.output_probs(probs)
+                if self.test_opts.get_weight:
+                    stag_embeddings = session.run(self.proj_U)
+                    self.loader.output_weight(stag_embeddings)
                         
             accuracy = np.mean(predictions == self.loader.test_gold)
             return accuracy
