@@ -11,6 +11,7 @@ parser = ArgumentParser()
 parser.add_argument('config_file', metavar='N', help='an integer for the accumulator')
 parser.add_argument('model_name', metavar='N', help='an integer for the accumulator')
 parser.add_argument("--no_gold",  help="compute tag accuracy", action="store_true", default=False)
+parser.add_argument("--save_probs",  help="save probabilities", action="store_true", default=False)
 opts = parser.parse_args()
 
 def read_config(config_file):
@@ -19,7 +20,7 @@ def read_config(config_file):
     return config_dict
 
 
-def test_stagger(config, best_model, data_types, no_gold):
+def test_stagger(config, best_model, data_types, opts):
     base_dir = config['data']['base_dir']
     base_command = 'python bilstm_stagger_main.py test'
     model_info = ' --model {}'.format(best_model)
@@ -29,7 +30,7 @@ def test_stagger(config, best_model, data_types, no_gold):
         inputs[10] = output_file
         if not os.path.isdir(os.path.dirname(output_file)):
             os.makedirs(os.path.dirname(output_file))
-        if no_gold:
+        if opts.no_gold:
             output_info = ' --save_tags {}'.format(output_file)
             test_data_info = ' --text_test {} --jk_test {} --tag_test {}'.format(os.path.join(base_dir, 'sents', '{}.txt'.format(data_type)), os.path.join(base_dir, 'predicted_pos', '{}.txt'.format(data_type)), os.path.join(base_dir, 'sents', '{}.txt'.format(data_type)))
         ## notice that sents for jk_test and tag_test. If no_gold is True, we don't have the gold data like PETE.
@@ -37,6 +38,9 @@ def test_stagger(config, best_model, data_types, no_gold):
         else:
             output_info = ' --save_tags {} --get_accuracy'.format(output_file)
             test_data_info = ' --text_test {} --jk_test {} --tag_test {}'.format(os.path.join(base_dir, 'sents', '{}.txt'.format(data_type)), os.path.join(base_dir, 'predicted_pos', '{}.txt'.format(data_type)), os.path.join(base_dir, 'gold_stag', '{}.txt'.format(data_type)))
+
+        if opts.save_probs: 
+            output_info += ' --save_probs'
         complete_command = base_command + model_info + output_info + test_data_info
         subprocess.check_call(complete_command, shell=True)
         #output_conllu(os.path.join(base_dir, config['data']['split'][data_type]), os.path.join(base_dir, config['data']['split'][data_type]+'_stag'), inputs)
@@ -48,4 +52,4 @@ if __name__ == '__main__':
     best_model = opts.model_name
     data_types = config_file['data']['split'].keys()
     data_types = [x for x in data_types if x!='train']
-    test_stagger(config_file, best_model, data_types, opts.no_gold)
+    test_stagger(config_file, best_model, data_types, opts)

@@ -110,6 +110,7 @@ class Stagging_Model_Concat_Hw(object):
             if reuse:
                 scope.reuse_variables()
             proj_U = tf.get_variable('weight', [self.outputs_dim, self.loader.nb_tags]) 
+            tf.add_to_collection('stag_embedding', proj_U)
             proj_b = tf.get_variable('bias', [self.loader.nb_tags])
             outputs = tf.matmul(inputs, proj_U)+proj_b 
         return outputs
@@ -124,6 +125,8 @@ class Stagging_Model_Concat_Hw(object):
         self.predictions = tf.cast(tf.argmax(output, 2), tf.int32) ## [batch_size, seq_len]
         correct_predictions = self.weight*tf.cast(tf.equal(self.predictions, self.inputs_placeholder_dict['tags']), tf.float32)
         self.accuracy = tf.reduce_sum(tf.cast(correct_predictions, tf.float32))/tf.reduce_sum(tf.cast(self.weight, tf.float32))
+    def add_probs(self, output):
+        self.probs = tf.nn.softmax(output)
 
     def add_train_op(self, loss):
         optimizer = tf.train.AdamOptimizer()
@@ -180,6 +183,7 @@ class Stagging_Model_Concat_Hw(object):
         self.loss = self.add_loss_op(projected_outputs)
         self.train_op = self.add_train_op(self.loss)
         self.add_accuracy(projected_outputs)
+        self.add_probs(projected_outputs)
 
     def run_batch(self, session, testmode = False):
         if not testmode:
@@ -201,10 +205,11 @@ class Stagging_Model_Concat_Hw(object):
             feed[self.keep_prob] = 1.0
             feed[self.hidden_prob] = 1.0
             feed[self.input_keep_prob] = 1.0
-            loss, accuracy, predictions, weight = session.run([self.loss, self.accuracy, self.predictions, self.weight], feed_dict=feed)
+            loss, accuracy, predictions, weight, probs = session.run([self.loss, self.accuracy, self.predictions, self.weight, self.probs], feed_dict=feed)
             weight = weight.astype(bool)
             predictions = predictions[weight]
-            return loss, accuracy, predictions
+            probs = probs[weight]
+            return loss, accuracy, predictions, probs
 
     def run_epoch(self, session, testmode = False):
 
@@ -222,15 +227,20 @@ class Stagging_Model_Concat_Hw(object):
             next_test_batch = self.loader.next_test_batch
             test_incomplete = next_test_batch(self.batch_size)
             predictions = []
+            probs = []
             while test_incomplete:
-                loss, accuracy, predictions_batch = self.run_batch(session, True)
+                loss, accuracy, predictions_batch, probs_batch = self.run_batch(session, True)
                 predictions.append(predictions_batch)
+                probs.append(probs_batch)
                 #print('Testmode {}/{}, loss {}, accuracy {}'.format(self.loader._index_in_test, self.loader.nb_validation_samples, loss, accuracy), end = '\r')
                 print('Test mode {}/{}'.format(self.loader._index_in_test, self.loader.nb_validation_samples), end = '\r')
                 test_incomplete = next_test_batch(self.batch_size)
             predictions = np.hstack(predictions)
+            probs = np.vstack(probs)
             if self.test_opts is not None:
                 self.loader.output_stags(predictions, self.test_opts.save_tags)
+                if self.test_opts.save_probs:
+                    self.loader.output_probs(probs)
                         
             accuracy = np.mean(predictions == self.loader.test_gold)
             return accuracy
