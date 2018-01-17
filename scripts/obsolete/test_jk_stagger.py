@@ -2,6 +2,9 @@ import subprocess
 import os
 import sys
 import json 
+import tools
+from tools.converters.conllu2sents import conllu2sents
+from tools.converters.sents2conllustag import output_conllu
 from argparse import ArgumentParser 
 
 parser = ArgumentParser()
@@ -43,6 +46,7 @@ def test_stagger(config, best_model, data_types, opts):
             output_info += ' --get_weight'
         complete_command = base_command + model_info + output_info + test_data_info
         subprocess.check_call(complete_command, shell=True)
+        #output_conllu(os.path.join(base_dir, config['data']['split'][data_type]), os.path.join(base_dir, config['data']['split'][data_type]+'_stag'), inputs)
 ######### main ##########
 
 if __name__ == '__main__':
