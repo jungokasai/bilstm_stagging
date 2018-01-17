@@ -68,15 +68,25 @@ python scripts/jackknife_training.py sample_data/config_demo.json 3
 ## <a name="pretrained"></a>Run a pre-trained TAG Supertagger
 
 We provide a pre-trained TAG supertagger.
-It achieves 90.81 % accuracy on the test data.
+It achieves 90.81 % accuracy on the test data in PTB.
+To run the pre-trained supertagger on your data, first [download the model](https://drive.google.com/drive/folders/1CzL7i0jnGT9BhQkM8vmiR-JbRohjIBZI?usp=sharing) and place the ``Pretrained_stagger`` directory in the ``tag_pretrained`` directory. The ``tag_pretrained`` directory already contains sample data (one sentence per line):
 
+* ``sents/test.txt`` 
+* ``predicted_pos/test.txt``
+* ``gold_stag/test.txt``
+
+You can replace these files by your own data.
+Then, run the following command:
 ```bash
 python scripts/run_pretrained.py tag_pretrained/config_pretrained.json tag_pretrained/Pretrained_Stagger/best_model 
 ```
+This yields supertagging accuracy and predicted supertags.
+If you do not have gold supertag data and do not want to compute accuracy, run it with the no_gold option:
 
 ```bash
 python scripts/run_pretrained.py tag_pretrained/config_pretrained.json tag_pretrained/Pretrained_Stagger/best_model --no_gold
 ```
+The configuration is given [here](tag_pretrained/README.md).
 
 ## Notes
 
@@ -90,3 +100,4 @@ If you use this tool for your research, please consider citing:
   publisher =   {Association for Computational Linguistics},
 }
 ```
+More references to come.
