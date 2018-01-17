@@ -20,7 +20,7 @@ def read_config(config_file):
 
 def test_stagger(config, best_model, data_types, opts):
     base_dir = config['data']['base_dir']
-    base_command = 'python bilstm_stagger_main.py test'
+    base_command = 'python bilstm_stagger_main.py test --pretrained --base_dir {}'.format(base_dir)
     model_info = ' --model {}'.format(best_model)
     for data_type in data_types:
         output_file = os.path.join(base_dir, 'predicted_stag', '{}.txt'.format(data_type))
@@ -50,5 +50,4 @@ if __name__ == '__main__':
     config_file = read_config(config_file)
     best_model = opts.model_name
     data_types = config_file['data']['split'].keys()
-    data_types = [x for x in data_types if x!='train']
     test_stagger(config_file, best_model, data_types, opts)

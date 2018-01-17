@@ -1,0 +1,26 @@
+{
+"data":
+    {"base_dir": "tag_pretrained",
+     "split": { 
+               "test": "conllu/test.conllustag_ppos"
+              }
+    },
+"stag_parameters":
+    {"model": "Stagging_Model_Concat_Hw",
+     "num_layers": "4", 
+     "units": "512",
+     "dropout_p": "0.5",
+     "hidden_p": "0.5",
+     "input_p": "0.5",
+     "jk_dim": "100",
+     "suffix_dim": "0",
+     "capitalize": "0",
+     "num_indicator": "0",
+     "chars_dim": "30",
+     "nb_filters": "30",
+     "max_epochs": "100",
+     "word_embeddings_file": "glovevector/glove.6B.100d.txt",
+     "embedding_dim": "100",
+     "lm": "0"
+    }
+}

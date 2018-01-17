@@ -22,18 +22,23 @@ class Dataset(object):
             path_to_text_test = opts.text_test
             path_to_tag_test = opts.tag_test
             path_to_jk_test = opts.jk_test
+            pretrained = False
         else:
             path_to_text_test = test_opts.text_test
             path_to_tag_test = test_opts.tag_test
             path_to_jk_test = test_opts.jk_test
+            pretrained = test_opts.pretrained
 
         self.inputs_train = {}
         self.inputs_test = {}
 
         ## indexing sents files
-        if opts.pretrained:
-            with open() as fin:
+        if pretrained:
+            tokenizer_dir = os.path.join(test_opts.base_dir, 'tokenizers')
+            with open(os.path.join(tokenizer_dir, 'word_tokenizer.pkl')) as fin:
                 tokenizer = pickle.load(fin)
+            texts = []
+            self.nb_train_samples = 0
         else:
             f_train = io.open(path_to_text, encoding='utf-8')
             texts = f_train.readlines()
@@ -127,11 +132,16 @@ class Dataset(object):
             ## indexing numbers ends
         ## indexing jackknife files
         if opts.jk_dim > 0:
-            f_train = io.open(path_to_jk, encoding='utf-8')
-            texts = f_train.readlines()
-            f_train.close()
-            tokenizer = Tokenizer(lower=False) 
-            tokenizer.fit_on_texts(texts)
+            if pretrained:
+                with open(os.path.join(tokenizer_dir, 'pos_tokenizer.pkl')) as fin:
+                    tokenizer = pickle.load(fin)
+                texts = []
+            else:
+                f_train = io.open(path_to_jk, encoding='utf-8')
+                texts = f_train.readlines()
+                f_train.close()
+                tokenizer = Tokenizer(lower=False) 
+                tokenizer.fit_on_texts(texts)
             self.jk_index = tokenizer.word_index
             self.nb_jk = len(self.jk_index)
             sorted_freqs = tokenizer.sorted_freqs
@@ -150,11 +160,16 @@ class Dataset(object):
             ## indexing jackknife files ends
         ## indexing char files
         if opts.chars_dim > 0:
-            f_train = io.open(path_to_text, encoding='utf-8')
-            texts = f_train.readlines()
-            f_train.close()
-            tokenizer = Tokenizer(lower=False,char_encoding=True) 
-            tokenizer.fit_on_texts(texts)
+            if pretrained:
+                with open(os.path.join(tokenizer_dir, 'char_tokenizer.pkl')) as fin:
+                    tokenizer = pickle.load(fin)
+                texts = []
+            else:
+                f_train = io.open(path_to_text, encoding='utf-8')
+                texts = f_train.readlines()
+                f_train.close()
+                tokenizer = Tokenizer(lower=False,char_encoding=True) 
+                tokenizer.fit_on_texts(texts)
             self.char_index = tokenizer.word_index
             self.nb_chars = len(self.char_index)
             sorted_freqs = tokenizer.sorted_freqs
@@ -172,11 +187,16 @@ class Dataset(object):
             self.inputs_test['chars'] = char_sequences[self.nb_train_samples:]
             ## indexing char files ends
         ## indexing stag files
-        f_train = open(path_to_tag)
-        texts = f_train.readlines()
-        f_train.close()
-        tokenizer = Tokenizer(lower=False) ## for tCO
-        tokenizer.fit_on_texts(texts, zero_padding=False)
+        if pretrained:
+            with open(os.path.join(tokenizer_dir, 'stag_tokenizer.pkl')) as fin:
+                tokenizer = pickle.load(fin)
+            texts = []
+        else:
+            f_train = open(path_to_tag)
+            texts = f_train.readlines()
+            f_train.close()
+            tokenizer = Tokenizer(lower=False) ## for tCO
+            tokenizer.fit_on_texts(texts, zero_padding=False)
         #print(tokenizer.word_index['-unseen-'])
         self.tag_index = tokenizer.word_index
         self.nb_tags = len(self.tag_index)
@@ -194,11 +214,14 @@ class Dataset(object):
         self.test_gold = np.hstack(tag_sequences[self.nb_train_samples:]) ## for calculation of accuracy
         ## padding the train inputs and test inputs
         #self.inputs_train = [pad_sequences(x) for x in self.inputs_train]
-        self.inputs_train = {key: pad_sequences(x, key) for key, x in self.inputs_train.items()}
-        random.seed(0)
-        perm = np.arange(self.nb_train_samples)
-        random.shuffle(perm)
-        self.inputs_train = {key: x[perm] for key, x in self.inputs_train.items()}
+        if pretrained:
+            self.inputs_train = {}
+        else:
+            self.inputs_train = {key: pad_sequences(x, key) for key, x in self.inputs_train.items()}
+            random.seed(0)
+            perm = np.arange(self.nb_train_samples)
+            random.shuffle(perm)
+            self.inputs_train = {key: x[perm] for key, x in self.inputs_train.items()}
         #self.inputs_train = [x[perm] for x in self.inputs_train]
 
         #self.inputs_test = [pad_sequences(x) for x in self.inputs_test]

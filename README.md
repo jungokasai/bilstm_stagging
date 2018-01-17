@@ -67,8 +67,16 @@ python scripts/jackknife_training.py sample_data/config_demo.json 3
 
 ## <a name="pretrained"></a>Run a pre-trained TAG Supertagger
 
-To Be Added.
+We provide a pre-trained TAG supertagger.
+It achieves 90.81 % accuracy on the test data.
 
+```bash
+python scripts/run_pretrained.py tag_pretrained/config_pretrained.json tag_pretrained/Pretrained_Stagger/best_model 
+```
+
+```bash
+python scripts/run_pretrained.py tag_pretrained/config_pretrained.json tag_pretrained/Pretrained_Stagger/best_model --no_gold
+```
 
 ## Notes
 

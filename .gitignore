@@ -7,3 +7,4 @@ glovevector
 data/*
 sample_data/*
 word_embeddings/*
+tag_pretrained/Pretrained_Stagger/*
