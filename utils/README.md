@@ -1,14 +1,15 @@
 # Stagging Model
 
 ## Stagger
-The stagging model is based on the [Kasai et al. EMNLP 2017](https://jungokasai.github.io/papers/EMNLP2017.pdf).
+The stagging model is based on the [Kasai et al. EMNLP 2017](http://www.aclweb.org/anthology/D17-1180).
 The inputs to the supertagger (stagger) are:
 
 * Word Identities
-* 2 character suffixes 
+* 2 character suffixes
 * Number Indicators
 * Capitalization Indicators
 * Predicted POS tags from the jackknife training
+* Char-level CNNs (not in the paper, added later)
 
 All the inputs listed above are sequences of length equal to the sentence length; our placeholders in the TensorFlow implementation are just those lists! Simple.
 
