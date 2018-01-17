@@ -31,12 +31,16 @@ class Dataset(object):
         self.inputs_test = {}
 
         ## indexing sents files
-        f_train = io.open(path_to_text, encoding='utf-8')
-        texts = f_train.readlines()
-        self.nb_train_samples = len(texts)
-        f_train.close()
-        tokenizer = Tokenizer(lower=True)
-        tokenizer.fit_on_texts(texts)
+        if opts.pretrained:
+            with open() as fin:
+                tokenizer = pickle.load(fin)
+        else:
+            f_train = io.open(path_to_text, encoding='utf-8')
+            texts = f_train.readlines()
+            self.nb_train_samples = len(texts)
+            f_train.close()
+            tokenizer = Tokenizer(lower=True)
+            tokenizer.fit_on_texts(texts)
         #print(tokenizer.word_index['-unseen-'])
         self.word_index = tokenizer.word_index
         sorted_freqs = tokenizer.sorted_freqs
