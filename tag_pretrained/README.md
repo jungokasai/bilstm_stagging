@@ -1,6 +1,7 @@
 # Pretrained TAG Supertagger
 
 ## Configuration
+|Hyper-parameter||
 |------|--------|
 |BiLSTM unit size|512|
 |# layers|3|
