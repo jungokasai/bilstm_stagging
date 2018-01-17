@@ -1,8 +1,8 @@
 # Pretrained TAG Supertagger
 
 ## Configuration
-|BiLSTM unit size|512|
 |------|--------|
+|BiLSTM unit size|512|
 |# layers|3|
 |Word embedding size | 100|
 |Predicted POS embedding size | 100|
