@@ -86,7 +86,7 @@ If you do not have gold supertag data and do not want to compute accuracy, run i
 ```bash
 python scripts/run_pretrained.py tag_pretrained/config_pretrained.json tag_pretrained/Pretrained_Stagger/best_model --no_gold
 ```
-The configuration is given [here](tag_pretrained/README.md).
+The configuration for the pretrained model is given [here](tag_pretrained/README.md).
 
 ## Notes
 
