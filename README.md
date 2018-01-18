@@ -1,6 +1,6 @@
 # A TensorFlow implementation of TAG Supertagging
 
-We provide a TensorFlow implementation of the [bi-LSTM TAG Supertagging](https://jungokasai.github.io/papers/EMNLP2017.pdf).
+We provide a TensorFlow implementation of the [bi-LSTM TAG Supertagging](http://www.aclweb.org/anthology/D17-1180).
 
 <img src="/images/bilstm.png" width="300">
 
