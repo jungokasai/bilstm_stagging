@@ -69,7 +69,7 @@ python scripts/jackknife_training.py sample_data/config_demo.json 3
 
 We provide a pre-trained TAG supertagger.
 It achieves 90.81 % accuracy on the test data in PTB.
-To run the pre-trained supertagger on your data, first [download the model](https://drive.google.com/drive/folders/1CzL7i0jnGT9BhQkM8vmiR-JbRohjIBZI?usp=sharing) and place the ``Pretrained_stagger`` directory in the ``tag_pretrained`` directory. The ``tag_pretrained`` directory already contains sample data (one sentence per line):
+To run the pre-trained supertagger on your data, first [download the model](https://drive.google.com/drive/folders/1CzL7i0jnGT9BhQkM8vmiR-JbRohjIBZI?usp=sharing) and place the ``Pretrained_Stagger`` directory in the ``tag_pretrained`` directory. The ``tag_pretrained`` directory already contains sample data (one sentence per line):
 
 * ``sents/test.txt`` 
 * ``predicted_pos/test.txt``
