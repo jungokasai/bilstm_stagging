@@ -10,5 +10,6 @@
 |Character Embedding|30|
 |# filters in CNNs |30|
 |Window size in CNNs |3|
+|Layer-to-layer dropout rate|0.5|
+|Recurrent dropout rate|0.5|
 |Highway Connections|Yes|
-
