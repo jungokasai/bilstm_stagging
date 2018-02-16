@@ -99,5 +99,11 @@ If you use this tool for your research, please consider citing:
   booktitle =   {Proceedings of EMNLP},  
   publisher =   {Association for Computational Linguistics},
 }
+@InProceedings{Kasai&al.18,
+  author =  {Jungo Kasai and Robert Frank and Pauli Xu and William Merrill and Owen Rambow},
+  title =   {End-to-end Graph-based TAG Parsing with Neural Networks},
+  year =    {2018},  
+  booktitle =   {Proceedings of NAACL},  
+  publisher =   {Association for Computational Linguistics},
+}
 ```
-More references to come.
