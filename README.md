@@ -18,6 +18,7 @@ We provide a TensorFlow implementation of the [bi-LSTM TAG Supertagging](http://
 
 TensorFlow needs to be installed before running the training script.
 TensorFlow 1.0.0 or higher is supported. 
+Python 2.7+ is suported. We will support Python 3 soon.
 
 ## GloVe
 
@@ -33,7 +34,7 @@ The supertagger takes as input a file in the Conllu+Supertag (conllustag) format
 ## <a name="train"></a>Train a Supertagger
 All you need to do is to create a new directory for your data in the [conllustag format](#data) and a json file for the model configuration and data information. We provide a [sample json file](sample_data/config_demo.json) for the [sample](sample_data) data directory. You can train a supertagger on the sample data by the following command:
 ```bash
-python train_bilstm_stagger.py sample_data/config_demo.json
+python scripts/train_bilstm_stagger.py sample_data/config_demo.json
 ```
 After running this command, you should be getting the following files and directories in sample_data/:
 

@@ -7,7 +7,7 @@
               }
     },
 "stag_parameters":
-    {"model": "Stagging_Model_CRF",
+    {"model": "Stagging_Model_Concat",
      "num_layers": "2", 
      "units": "50",
      "dropout_p": "0.5",
