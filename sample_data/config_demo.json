@@ -24,5 +24,24 @@
      "word_embeddings_file": "glovevector/glove.6B.100d.txt",
      "embedding_dim": "100",
      "lm": "100"
+    },
+"pos_parameters":
+    {"model": "Stagging_Model_Concat",
+     "num_layers": "1", 
+     "units": "50",
+     "dropout_p": "0.5",
+     "hidden_p": "0.5",
+     "input_p": "0.8",
+     "jk_dim": "0",
+     "suffix_dim": "0",
+     "capitalize": "0",
+     "num_indicator": "0",
+     "chars_dim": "30",
+     "nb_filters": "30",
+     "max_epochs": "1",
+     "early_stopping": "5",
+     "word_embeddings_file": "glovevector/glove.6B.100d.txt",
+     "embedding_dim": "100",
+     "lm": "100"
     }
 }

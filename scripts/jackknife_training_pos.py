@@ -99,7 +99,9 @@ def separate_training_set(config, k_fold):
 def jackknife_train(jk_base_dir, k_fold):
     for ith in xrange(k_fold):
         new_config = os.path.join(jk_base_dir, str(ith), 'k_fold-config.json')
-        train_command = 'python train_bilstm_postagger.py {}'.format(new_config)
+        preprocess_command = 'python scripts/preprocess.py {}'.format(new_config)
+        subprocess.check_call(preprocess_command, shell=True)
+        train_command = 'python scripts/train_bilstm_postagger.py {}'.format(new_config)
         print('{}/{} Jackknifing'.format(ith+1, k_fold))
         subprocess.check_call(train_command, shell=True)
 ######### main ##########

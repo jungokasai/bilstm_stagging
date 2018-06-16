@@ -32,8 +32,9 @@ and save it to a sub-directory glovevector/.
 The supertagger takes as input a file in the Conllu+Supertag (conllustag) format, in which one column for supertags is added to the original conllu format at the end. See a [sample](sample_data/conllu/sample.conllustag).
 
 ## <a name="train"></a>Train a Supertagger
-All you need to do is to create a new directory for your data in the [conllustag format](#data) and a json file for the model configuration and data information. We provide a [sample json file](sample_data/config_demo.json) for the [sample](sample_data) data directory. You can train a supertagger on the sample data by the following command:
+All you need to do is to create a new directory for your data in the [conllustag format](#data) and a json file for the model configuration and data information. We provide a [sample json file](sample_data/config_demo.json) for the [sample](sample_data) data directory. You can train a supertagger on the sample data by the following commands:
 ```bash
+python scripts/preprocess.py sample_data/config_demo.json
 python scripts/train_bilstm_stagger.py sample_data/config_demo.json
 ```
 After running this command, you should be getting the following files and directories in sample_data/:

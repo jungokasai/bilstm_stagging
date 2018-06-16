@@ -84,8 +84,8 @@ def test_stagger(config, best_model, data_types):
 if __name__ == '__main__':
     config_file = sys.argv[1]
     config_file = read_config(config_file)
-    print('Convert conllu+stag file to sentences, gold pos, and gold stag')
-    converter(config_file)
+#    print('Convert conllu+stag file to sentences, gold pos, and gold stag')
+#    converter(config_file)
 #    print('Train POS-tagger')
 #    train_pos_tagger(config_file)
 #    print('Run Jackknife Training of POS tagging for Supertagging')
