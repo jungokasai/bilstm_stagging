@@ -35,7 +35,7 @@ if __name__ == '__main__':
 #    input_conllu_file = '../../ud/stag_extraction/new_data/WSJ/conllu/wsj.dev.conllu1'
 #    output_conllu_file = 'wsj.dev.conllu_stag'
 #    output_conllu(sents_file, input_conllu_file, output_conllu_file)
-    data_types = ['dev', 'test', 'train']
+    data_types = ['test']
     base_dir = '/data/lily/jk964/active_projects/tag/tag_wsj'
     for data_type in data_types:
         inputs = {}

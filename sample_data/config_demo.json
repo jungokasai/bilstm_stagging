@@ -19,7 +19,7 @@
      "num_indicator": "0",
      "chars_dim": "30",
      "nb_filters": "30",
-     "max_epochs": "1000",
+     "max_epochs": "1",
      "early_stopping": "1000",
      "word_embeddings_file": "glovevector/glove.6B.100d.txt",
      "embedding_dim": "100",
