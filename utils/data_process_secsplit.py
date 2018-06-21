@@ -328,13 +328,13 @@ class Dataset(object):
 
 
     def output_stags(self, predictions, filename):
-        stags = map(lambda x: self.idx_to_tag[x], predictions)
+        stags = list(map(lambda x: self.idx_to_tag[x], predictions))
         ## For formatting, let's calculate sentence lengths. np.sum is also faster than a for loop
         ## To Do: allow for the CoNLL format
         sents_lengths = np.sum(self.inputs_test['words']!=0, 1)
         stag_idx = 0
         with open(filename, 'wt') as fwrite:
-            for sent_idx in xrange(len(sents_lengths)):
+            for sent_idx in range(len(sents_lengths)):
                 fwrite.write(' '.join(stags[stag_idx:stag_idx+sents_lengths[sent_idx]]))
                 fwrite.write('\n')
                 stag_idx += sents_lengths[sent_idx]
@@ -344,8 +344,8 @@ class Dataset(object):
     def output_weight(self, stag_embeddings):
         filename = 'stag_embeddings.txt'
         with open(filename, 'wt') as fout:
-            for i in xrange(stag_embeddings.shape[0]):
-                output_row = [self.idx_to_tag[i]]+map(str, stag_embeddings[i])
+            for i in range(stag_embeddings.shape[0]):
+                output_row = [self.idx_to_tag[i]]+list(map(str, stag_embeddings[i]))
                 fout.write(' '.join(output_row))
                 fout.write('\n')
 

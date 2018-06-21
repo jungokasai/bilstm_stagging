@@ -23,7 +23,7 @@ def run_model(opts, loader = None, epoch=0):
                 optimistic_restore(session, opts.modelname)
             best_accuracy = -1.0
             bad_times = 0
-            for i in xrange(opts.max_epochs):
+            for i in range(opts.max_epochs):
                 print('Epoch {}'.format(i+1))
                 loss, accuracy = model.run_epoch(session)
                 test_accuracy = model.run_epoch(session, True)

@@ -96,6 +96,7 @@ if __name__ == '__main__':
 #    data_types = config_file['data']['split'].keys()
     data_types = config_file['data']['split'].keys()
     print('data types')
+    data_types = ['test']
     print(data_types)
     test_stagger(config_file, best_model, data_types)
 #    test_stagger(config_file, best_model, ['train'])

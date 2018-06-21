@@ -16,8 +16,8 @@ import sys
 
 class Stagging_Model_Concat(object):
     def add_placeholders(self):
-        #self.inputs_placeholder_list = [tf.placeholder(tf.int32, shape = [None, None]) for _ in xrange(2+self.opts.suffix+self.opts.num+self.opts.cap+self.opts.jackknife)] # 2 for text_sequences and tag_sequences, necessary no matter what
-        #self.inputs_placeholder_list = [tf.placeholder(tf.int32, shape = [None, None]) for _ in xrange(6)] # 2 for text_sequences and tag_sequences, necessary no matter what
+        #self.inputs_placeholder_list = [tf.placeholder(tf.int32, shape = [None, None]) for _ in range(2+self.opts.suffix+self.opts.num+self.opts.cap+self.opts.jackknife)] # 2 for text_sequences and tag_sequences, necessary no matter what
+        #self.inputs_placeholder_list = [tf.placeholder(tf.int32, shape = [None, None]) for _ in range(6)] # 2 for text_sequences and tag_sequences, necessary no matter what
         self.inputs_placeholder_dict = {}
         for feature in self.features:
             if feature == 'chars':
@@ -167,7 +167,7 @@ class Stagging_Model_Concat(object):
         inputs_tensor = tf.concat(inputs_list, 2) ## [seq_len, batch_size, inputs_dim]
         inputs_tensor = self.add_dropout(inputs_tensor, self.input_keep_prob)
         self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)), tf.float32) ## [batch_size, seq_len]
-        for i in xrange(self.opts.num_layers):
+        for i in range(self.opts.num_layers):
             forward_outputs_tensor = self.add_dropout(self.add_lstm(inputs_tensor, i, 'Forward'), self.keep_prob) ## [seq_len, batch_size, units]
             if self.opts.bi:
                 backward_outputs_tensor = self.add_dropout(self.add_lstm(tf.reverse(inputs_tensor, [0]), i, 'Backward', True), self.keep_prob) ## [seq_len, batch_size, units]
