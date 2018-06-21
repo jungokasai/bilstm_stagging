@@ -1,7 +1,7 @@
 import numpy as np
-from preprocessing import Tokenizer
-from preprocessing import pad_sequences 
-from mica.nbest import output_mica_nbest
+from utils.preprocessing import Tokenizer
+from utils.preprocessing import pad_sequences 
+from utils.mica.nbest import output_mica_nbest
 import os
 import sys
 import pickle
@@ -69,7 +69,7 @@ class Dataset(object):
 
         print('Found {} word vectors.'.format(len(self.embeddings_index)))
 
-        unseens = list(set(self.embeddings_index.keys()) - set(self.word_index.keys())) ## list of words that appear in glove but not in the training set
+        unseens = sorted(list(set(self.embeddings_index.keys()) - set(self.word_index.keys()))) ## list of words that appear in glove but not in the training set
         nb_unseens = len(unseens)
         print('Found {} words not in the training set'.format(nb_unseens))
 

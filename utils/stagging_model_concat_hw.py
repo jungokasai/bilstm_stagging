@@ -1,8 +1,8 @@
 from __future__ import print_function
 #import matplotlib
-from data_process_secsplit import Dataset
-from lstm_hw import get_lstm_weights, lstm
-from char_encoding import get_char_weights, encode_char
+from utils.data_process_secsplit import Dataset
+from utils.lstm_hw import get_lstm_weights, lstm
+from utils.char_encoding import get_char_weights, encode_char
 #matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
 import numpy as np

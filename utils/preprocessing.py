@@ -218,7 +218,7 @@ class Tokenizer(object):
         self.sorted_freqs = [wc[1] for wc in wcounts]
         # if zero_padding is true, note that index 0 is reserved, never assigned to an existing word
         zero_padding = int(zero_padding)
-        self.word_index = dict(list(zip(sorted_voc, list(xrange(zero_padding, len(sorted_voc) + zero_padding)))))
+        self.word_index = dict(list(zip(sorted_voc, list(range(zero_padding, len(sorted_voc) + zero_padding)))))
 
         self.word_index['-unseen-'] = len(self.word_index) + zero_padding
 

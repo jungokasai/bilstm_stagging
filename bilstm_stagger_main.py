@@ -75,11 +75,11 @@ if opts.mode == "train":
     print('Model Dirctory: {}'.format(opts.model_dir))
     if not os.path.isdir(opts.model_dir):
         os.makedirs(opts.model_dir)
-    with open(os.path.join(opts.model_dir, 'options.pkl'), 'wt') as fhand:
+    with open(os.path.join(opts.model_dir, 'options.pkl'), 'wb') as fhand:
         pickle.dump(opts, fhand)
     run_model(opts)
     
 if opts.mode == "test":
-    with open(os.path.join(os.path.dirname(opts.modelname), 'options.pkl')) as foptions:
+    with open(os.path.join(os.path.dirname(opts.modelname), 'options.pkl'), 'rb') as foptions:
         options=pickle.load(foptions)
     run_model_test(options, opts)

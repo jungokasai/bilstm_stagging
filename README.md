@@ -18,7 +18,7 @@ We provide a TensorFlow implementation of the [bi-LSTM TAG Supertagging](http://
 
 TensorFlow needs to be installed before running the training script.
 TensorFlow 1.0.0 or higher is supported. 
-Python 2.7+ is suported. We will support Python 3 soon.
+Python 3.6 is suported. 
 
 ## GloVe
 
