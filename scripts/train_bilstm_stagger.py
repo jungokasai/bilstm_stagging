@@ -54,8 +54,8 @@ def train_pos_tagger(config):
 def train_stagger(config):
     base_dir = config['data']['base_dir']
     base_command = 'python bilstm_stagger_main.py train --task Super_models --base_dir {}'.format(base_dir)
-    train_data_info = ' --text_train {} --jk_train {} --tag_train {}'.format(os.path.join(base_dir, 'sents', 'train.txt'), os.path.join(base_dir, 'gold_stag', 'train.txt'), os.path.join(base_dir, 'gold_stag', 'train.txt'))
-    dev_data_info = ' --text_test {} --jk_test {} --tag_test {}'.format(os.path.join(base_dir, 'sents', 'dev.txt'), os.path.join(base_dir, 'gold_stag', 'dev.txt'), os.path.join(base_dir, 'gold_stag', 'dev.txt'))
+    train_data_info = ' --text_train {} --jk_train {} --tag_train {}'.format(os.path.join(base_dir, 'sents', 'train.txt'), os.path.join(base_dir, 'gold_pos', 'train.txt'), os.path.join(base_dir, 'gold_stag', 'train.txt'))
+    dev_data_info = ' --text_test {} --jk_test {} --tag_test {}'.format(os.path.join(base_dir, 'sents', 'dev.txt'), os.path.join(base_dir, 'gold_pos', 'dev.txt'), os.path.join(base_dir, 'gold_stag', 'dev.txt'))
     model_config_dict = config['stag_parameters']
     model_config_info = ''
     for option, value in model_config_dict.items():
@@ -75,7 +75,7 @@ def test_stagger(config, best_model, data_types):
         if not os.path.isdir(os.path.dirname(output_file)):
             os.makedirs(os.path.dirname(output_file))
         output_info = ' --save_tags {} --get_accuracy'.format(output_file)
-        test_data_info = ' --text_test {} --jk_test {} --tag_test {}'.format(os.path.join(base_dir, 'sents', '{}.txt'.format(data_type)), os.path.join(base_dir, 'gold_stag', '{}.txt'.format(data_type)), os.path.join(base_dir, 'gold_stag', '{}.txt'.format(data_type)))
+        test_data_info = ' --text_test {} --jk_test {} --tag_test {}'.format(os.path.join(base_dir, 'sents', '{}.txt'.format(data_type)), os.path.join(base_dir, 'gold_pos', '{}.txt'.format(data_type)), os.path.join(base_dir, 'gold_stag', '{}.txt'.format(data_type)))
         complete_command = base_command + model_info + output_info + test_data_info
         subprocess.check_call(complete_command, shell=True)
         #output_conllu(os.path.join(base_dir, config['data']['split'][data_type]), os.path.join(base_dir, config['data']['split'][data_type]+'_stag'), inputs)
