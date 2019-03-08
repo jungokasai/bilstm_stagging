@@ -186,6 +186,12 @@ class Dataset(object):
             self.inputs_train['chars'] = char_sequences[:self.nb_train_samples]
             self.inputs_test['chars'] = char_sequences[self.nb_train_samples:]
             ## indexing char files ends
+        if opts.elmo > 0:
+            tokenizer = Tokenizer(lower=False) 
+            text_sequences_elmo = tokenizer.texts_to_sequences(texts, elmo=True)
+            self.inputs_train['elmo'] = text_sequences_elmo[:self.nb_train_samples]
+            self.inputs_test['elmo'] = text_sequences_elmo[self.nb_train_samples:]
+
         ## indexing stag files
         if pretrained:
             with open(os.path.join(tokenizer_dir, 'stag_tokenizer.pkl')) as fin:
@@ -197,6 +203,7 @@ class Dataset(object):
             f_train.close()
             tokenizer = Tokenizer(lower=False) ## for tCO
             tokenizer.fit_on_texts(texts, zero_padding=False)
+
         #print(tokenizer.word_index['-unseen-'])
         self.tag_index = tokenizer.word_index
         self.nb_tags = len(self.tag_index)

@@ -9,6 +9,7 @@ import numpy as np
 import time
 import pickle
 import tensorflow as tf
+import tensorflow_hub as hub
 from tensorflow.contrib.seq2seq import sequence_loss
 import os
 import sys
@@ -22,6 +23,8 @@ class Stagging_Model_Concat_Hw(object):
         for feature in self.features:
             if feature == 'chars':
                 self.inputs_placeholder_dict[feature] = tf.placeholder(tf.int32, shape = [None, None, None])
+            elif feature == 'elmo':
+                self.inputs_placeholder_dict[feature] = tf.placeholder(tf.string, shape = [None, None])
             else:
                 self.inputs_placeholder_dict[feature] = tf.placeholder(tf.int32, shape = [None, None])
 
@@ -115,6 +118,21 @@ class Stagging_Model_Concat_Hw(object):
             proj_b = tf.get_variable('bias', [self.loader.nb_tags])
             outputs = tf.matmul(inputs, proj_U)+proj_b 
         return outputs
+    def add_elmo(self):
+        elmo = hub.Module("https://tfhub.dev/google/elmo/2", trainable=True)
+        inputs_shape = tf.shape(self.inputs_placeholder_dict['words'])
+        tokens_length = tf.cast(tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(inputs_shape, tf.int32)), tf.float32) # [batch_size, seq_len]
+        tokens_length = tf.cast(tf.reduce_sum(tokens_length, axis=1), tf.int32) # [batch_size]
+        inputs = elmo(
+            inputs={
+                    "tokens": self.inputs_placeholder_dict['elmo'],
+                    "sequence_len": tokens_length
+                    },
+                    signature="tokens",
+                    as_dict=True)["elmo"]
+        inputs = tf.transpose(inputs, perm=[1, 0, 2]) # [seq_length, batch_size, embedding_dim]
+        return inputs 
+
 
     def add_loss_op(self, output):
         cross_entropy = sequence_loss(output, self.inputs_placeholder_dict['tags'], self.weight)
@@ -146,6 +164,8 @@ class Stagging_Model_Concat_Hw(object):
             self.features.append('jk')
         if self.opts.chars_dim > 0:
             self.features.append('chars')
+        if self.opts.elmo > 0:
+            self.features.append('elmo')
     
     def __init__(self, opts, test_opts=None):
        
@@ -155,7 +175,7 @@ class Stagging_Model_Concat_Hw(object):
         self.batch_size = opts.batch_size
         self.get_features()
         self.add_placeholders()
-        self.inputs_dim = self.opts.embedding_dim + self.opts.suffix_dim + self.opts.cap + self.opts.num + self.opts.jk_dim + self.opts.nb_filters
+        self.inputs_dim = self.opts.embedding_dim + self.opts.suffix_dim + self.opts.cap + self.opts.num + self.opts.jk_dim + self.opts.nb_filters + self.opts.elmo
         self.outputs_dim = (1+self.opts.bi)*self.opts.units
         inputs_list = [self.add_word_embedding()]
         if self.opts.suffix_dim > 0:
@@ -168,10 +188,12 @@ class Stagging_Model_Concat_Hw(object):
             inputs_list.append(self.add_jackknife_embedding())
         if self.opts.chars_dim > 0:
             inputs_list.append(self.add_char_embedding())
+        if self.opts.elmo > 0:
+            inputs_list.append(self.add_elmo())
         inputs_tensor = tf.concat(inputs_list, 2) ## [seq_len, batch_size, inputs_dim]
         inputs_tensor = self.add_dropout(inputs_tensor, self.input_keep_prob)
         self.weight = tf.cast(tf.not_equal(self.inputs_placeholder_dict['words'], tf.zeros(tf.shape(self.inputs_placeholder_dict['words']), tf.int32)), tf.float32) ## [batch_size, seq_len]
-        for i in xrange(self.opts.num_layers):
+        for i in range(self.opts.num_layers):
             forward_outputs_tensor = self.add_dropout(self.add_lstm(inputs_tensor, i, 'Forward'), self.keep_prob) ## [seq_len, batch_size, units]
             if self.opts.bi:
                 backward_outputs_tensor = self.add_dropout(self.add_lstm(tf.reverse(inputs_tensor, [0]), i, 'Backward', True), self.keep_prob) ## [seq_len, batch_size, units]

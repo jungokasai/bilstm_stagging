@@ -22,10 +22,10 @@ def get_lstm_weights(name, inputs_dim, units, batch_size, hidden_prob, beam_size
         weights['bias_g'] = tf.get_variable('bias_extract', [units])
         weights['bias_highway'] = tf.get_variable('bias_highway', [units])
         dummy_dp = tf.ones([batch_size, units])
-        weights['dropout'] = [tf.nn.dropout(dummy_dp, hidden_prob) for _ in xrange(5)]
+        weights['dropout'] = [tf.nn.dropout(dummy_dp, hidden_prob) for _ in range(5)]
         if beam_size > 0:
             dummy_dp = tf.ones([batch_size*beam_size, units])
-            weights['dropout_post_first'] = [tf.nn.dropout(dummy_dp, hidden_prob) for _ in xrange(4)]
+            weights['dropout_post_first'] = [tf.nn.dropout(dummy_dp, hidden_prob) for _ in range(4)]
     return weights
 
 def get_decoder_weights(weights, name, inputs_dim, units, reuse=False):

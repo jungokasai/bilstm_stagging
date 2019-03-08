@@ -35,6 +35,7 @@ train_parser.add_argument("--embedding_dim", dest="embedding_dim", help="embeddi
 train_parser.add_argument("--word_embeddings_file", dest="word_embeddings_file", help="embeddings file", default = 'glovevector/glove.6B.100d.txt')
 train_parser.add_argument("--early_stopping", dest="early_stopping", help="early stopping", type=int, default = 5)
 train_parser.add_argument("--suffix_dim", dest="suffix_dim", help="suffix_dim", type=int, default = 10)
+train_parser.add_argument("--elmo", dest="elmo", help="elmo", type=int, default = 1024)
 
 ### char embeddings
 train_parser.add_argument("--chars_dim", dest="chars_dim", help="character embedding dim", type=int, default = 30)
